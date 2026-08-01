@@ -1,4 +1,33 @@
-import type { GoldKind, PricePoint, StoreSnapshot } from '../types'
+import type { ChartRange, GoldKind, PricePoint, StoreSnapshot } from '../types'
+
+const MS: Record<Exclude<ChartRange, 'All'>, number> = {
+  '1D': 24 * 60 * 60 * 1000,
+  '7D': 7 * 24 * 60 * 60 * 1000,
+  '30D': 30 * 24 * 60 * 60 * 1000,
+  '3M': 90 * 24 * 60 * 60 * 1000,
+}
+
+export function filterByRange<T extends { ts: number }>(
+  points: T[],
+  range: ChartRange,
+): T[] {
+  if (range === 'All') return points
+  const cutoff = Date.now() - MS[range]
+  return points.filter((p) => p.ts >= cutoff)
+}
+
+export function filterHistory(
+  history: PricePoint[],
+  range: ChartRange,
+  kinds?: PricePoint['kind'][],
+): PricePoint[] {
+  let points = filterByRange(history, range)
+  if (kinds?.length) {
+    points = points.filter((p) => kinds.includes(p.kind))
+  }
+  return points
+}
+
 
 const STORAGE_KEY = 'gold-price-history-v1'
 const STORAGE_KEY_TEST = 'gold-price-history-test-v1'

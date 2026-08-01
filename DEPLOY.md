@@ -57,7 +57,6 @@ Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy t
 
 - **DEV**: fetch qua Vite proxy
 - **Production (Pages)**: fetch `BASE_URL/data/latest/{hkn,kkvh}.json`
-- SJC trên Pages: raw GitHub CSV (CORS OK)
 - Merge `history/{store}/history.json` remote với localStorage
 
 ### 6. Seed data lần đầu

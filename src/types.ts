@@ -27,10 +27,3 @@ export type StoreSnapshot = {
 }
 
 export type ChartRange = '1D' | '7D' | '30D' | '3M' | 'All'
-
-export type SjcPoint = {
-  date: string
-  ts: number
-  buy: number
-  sell: number
-}

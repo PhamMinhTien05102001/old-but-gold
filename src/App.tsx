@@ -1,11 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { routes } from './routes.ts'
-import { useGoldPrices } from './context/GoldPricesContext.tsx'
-import { RefreshBar } from './components/RefreshBar.tsx'
 
 export default function App() {
-  const { loading, error, lastFetchedAt, refresh } = useGoldPrices()
-
   return (
     <div className="mx-auto max-w-[1100px] px-3.5 py-4 pb-8 sm:px-5 sm:py-6 sm:pb-12">
       <header className="text-cream mb-5">
@@ -17,16 +13,9 @@ export default function App() {
         </h1>
         <p className="text-sand m-0 max-w-2xl">
           Hoa Kim Nguyên & Kim Khánh Việt Hùng — bảng giá, chênh mua/bán, biểu đồ lịch sử
-          tự tích lũy, và tham chiếu thị trường SJC.
+          tự tích lũy.
         </p>
       </header>
-
-      <RefreshBar
-        loading={loading}
-        lastFetchedAt={lastFetchedAt}
-        error={error}
-        onRefresh={() => void refresh()}
-      />
 
       <nav className="mb-4 flex flex-wrap gap-2" aria-label="Chọn nguồn">
         {routes.map((route) => (

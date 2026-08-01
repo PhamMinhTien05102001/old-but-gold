@@ -23,8 +23,6 @@ type GoldPricesContextValue = {
   kkvh: StoreSnapshot | null
   hknRows: CurrentRow[]
   kkvhRows: CurrentRow[]
-  lastFetchedAt?: number
-  refresh: () => Promise<void>
 }
 
 const GoldPricesContext = createContext<GoldPricesContextValue | null>(null)
@@ -35,7 +33,6 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<PricePoint[]>(() => loadHistory())
   const [hkn, setHkn] = useState<StoreSnapshot | null>(null)
   const [kkvh, setKkvh] = useState<StoreSnapshot | null>(null)
-  const [lastFetchedAt, setLastFetchedAt] = useState<number | undefined>()
 
   useEffect(() => {
     // Production: merge remote history. Dev test: load fixtures from data-test.
@@ -54,14 +51,13 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
     })()
   }, [])
 
-  const refresh = useCallback(async () => {
+  const loadPrices = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const { hkn: h, kkvh: k, fetchedAt, source } = await fetchAllSnapshots()
+      const { hkn: h, kkvh: k, source } = await fetchAllSnapshots()
       setHkn(h)
       setKkvh(k)
-      setLastFetchedAt(fetchedAt)
       if (source === 'test') {
         const remote = await fetchRemoteHistory()
         saveHistory(remote)
@@ -70,15 +66,15 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
         setHistory(appendSnapshots([h, k]))
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không cập nhật được giá')
+      setError(e instanceof Error ? e.message : 'Không tải được giá')
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    void loadPrices()
+  }, [loadPrices])
 
   const value = useMemo<GoldPricesContextValue>(
     () => ({
@@ -89,10 +85,8 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
       kkvh,
       hknRows: hkn?.rows ?? [],
       kkvhRows: kkvh?.rows ?? [],
-      lastFetchedAt,
-      refresh,
     }),
-    [loading, error, history, hkn, kkvh, lastFetchedAt, refresh],
+    [loading, error, history, hkn, kkvh],
   )
 
   return <GoldPricesContext.Provider value={value}>{children}</GoldPricesContext.Provider>

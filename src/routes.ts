@@ -1,10 +1,8 @@
 import type { ComponentType } from 'react'
 import { HknPage } from './pages/HknPage/index.tsx'
 import { KkvhPage } from './pages/KkvhPage/index.tsx'
-import { ComparePage } from './pages/ComparePage/index.tsx'
-import { MarketPage } from './pages/MarketPage/index.tsx'
 
-export type AppRouteId = 'hkn' | 'kkvh' | 'compare' | 'market'
+export type AppRouteId = 'hkn' | 'kkvh'
 
 export type AppRoute = {
   id: AppRouteId
@@ -26,18 +24,6 @@ export const routes: AppRoute[] = [
     path: '/kkvh',
     label: 'Kim Khánh Việt Hùng',
     Component: KkvhPage,
-  },
-  {
-    id: 'compare',
-    path: '/compare',
-    label: 'So sánh',
-    Component: ComparePage,
-  },
-  {
-    id: 'market',
-    path: '/market',
-    label: 'Thị trường SJC',
-    Component: MarketPage,
   },
 ]
 

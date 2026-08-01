@@ -36,10 +36,10 @@ VITE_USE_TEST_DATA=false  # mặc định: proxy (dev) / public/data (prod)
 ```
 src/
   routes.ts                 # path + page components
-  pages/*/index.tsx         # Hkn, Kkvh, Compare, Market
+  pages/*/index.tsx         # Hkn, Kkvh
   components/               # UI (StoreTab, charts, …)
   context/GoldPricesContext.tsx
-  lib/                      # fetch, parse, history, SJC
+  lib/                      # fetch, parse, history
 scripts/
   scrape.mjs                # crawl adaptive
   sources.json              # danh sách domain

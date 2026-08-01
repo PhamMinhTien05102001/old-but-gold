@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
-import { filterHistory } from '../lib/sjc'
+import { filterHistory } from '../lib/history'
 import { previousPoint } from '../lib/history'
 import { formatDelta, formatVnd, spread, spreadPercent } from '../lib/normalize'
 import { PriceChart } from './PriceChart'
@@ -82,7 +82,7 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
       </header>
 
       {!rows.length ? (
-        <p className="text-muted m-0">Chưa có dữ liệu. Bấm Refresh để lấy giá.</p>
+        <p className="text-muted m-0">Chưa có dữ liệu giá.</p>
       ) : (
         <>
           <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
@@ -165,7 +165,7 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
           <PriceChart
             data={chartData}
             series={series}
-            emptyMessage="Chưa có lịch sử. Refresh vài lần (hoặc qua các ngày) để tích lũy biểu đồ."
+            emptyMessage="Chưa có lịch sử. Dữ liệu sẽ tích lũy theo các lần scrape."
           />
         </>
       )}
