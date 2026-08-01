@@ -31,6 +31,50 @@ export function formatVnd(value: number): string {
   return new Intl.NumberFormat('vi-VN').format(value) + 'đ'
 }
 
+function pad2(n: string | number): string {
+  return String(n).padStart(2, '0')
+}
+
+/**
+ * Canonical source timestamp: `HH:mm:ss DD/MM/YYYY` (time then date).
+ * Accepts common crawl variants (HKN time-first, KKVH date-first).
+ */
+export function normalizeSourceUpdatedAt(raw?: string | null): string | undefined {
+  if (!raw) return undefined
+  const s = raw.trim().replace(/\s+/g, ' ')
+
+  // HH:mm[:ss][, ]DD/MM/YYYY
+  let m = s.match(
+    /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[, ]\s*(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+  )
+  if (m) {
+    const [, h, mi, sec = '00', d, mo, y] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
+  // DD/MM/YYYY[, ]HH:mm[:ss]
+  m = s.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*[, ]\s*(\d{1,2}):(\d{2})(?::(\d{2}))?$/,
+  )
+  if (m) {
+    const [, d, mo, y, h, mi, sec = '00'] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
+  return s
+}
+
+/** Epoch ms for a canonical (or raw) sourceUpdatedAt string; null if unparseable. */
+export function sourceUpdatedAtToMs(raw?: string | null): number | null {
+  const n = normalizeSourceUpdatedAt(raw)
+  if (!n) return null
+  const m = n.match(/^(\d{2}):(\d{2}):(\d{2}) (\d{2})\/(\d{2})\/(\d{4})$/)
+  if (!m) return null
+  const [, hh, mi, ss, dd, mo, yyyy] = m
+  const ms = new Date(+yyyy, +mo - 1, +dd, +hh, +mi, +ss).getTime()
+  return Number.isNaN(ms) ? null : ms
+}
+
 export function normalizeLabel(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/đ/gi, 'd').trim().toLowerCase()
 }

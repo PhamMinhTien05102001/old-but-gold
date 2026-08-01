@@ -1,4 +1,5 @@
 import type { ChartRange, GoldKind, PricePoint, StoreSnapshot } from '../types'
+import { normalizeSourceUpdatedAt } from './normalize'
 
 const MS: Record<Exclude<ChartRange, 'All'>, number> = {
   '1D': 24 * 60 * 60 * 1000,
@@ -105,7 +106,7 @@ export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
         label: row.label,
         buy: row.buy,
         sell: row.sell,
-        sourceUpdatedAt: snap.sourceUpdatedAt,
+        sourceUpdatedAt: normalizeSourceUpdatedAt(snap.sourceUpdatedAt),
       })
     }
   }

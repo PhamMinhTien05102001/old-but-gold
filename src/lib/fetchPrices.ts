@@ -1,5 +1,6 @@
 import { parseHkn } from './parseHkn'
 import { parseKkvh } from './parseKkvh'
+import { normalizeSourceUpdatedAt } from './normalize'
 import type { PricePoint, StoreId, StoreSnapshot } from '../types'
 
 export type LatestPayload = {
@@ -47,12 +48,29 @@ async function fetchHtml(path: string): Promise<string> {
   return res.text()
 }
 
+function normalizeSnapshot(snap: StoreSnapshot | null): StoreSnapshot | null {
+  if (!snap) return null
+  return {
+    ...snap,
+    sourceUpdatedAt: normalizeSourceUpdatedAt(snap.sourceUpdatedAt),
+  }
+}
+
+function normalizeHistoryPoint(p: PricePoint): PricePoint {
+  return {
+    ...p,
+    sourceUpdatedAt: normalizeSourceUpdatedAt(p.sourceUpdatedAt),
+  }
+}
+
 /** latest/hkn.json + latest/kkvh.json */
 export async function fetchLatestFromJson(): Promise<LatestPayload> {
-  const [hkn, kkvh] = await Promise.all([
+  const [hknRaw, kkvhRaw] = await Promise.all([
     fetchJson<StoreSnapshot>('latest/hkn.json'),
     fetchJson<StoreSnapshot>('latest/kkvh.json'),
   ])
+  const hkn = normalizeSnapshot(hknRaw)
+  const kkvh = normalizeSnapshot(kkvhRaw)
 
   if (!hkn?.rows?.length && !kkvh?.rows?.length) {
     const hint = useTestData()
@@ -78,7 +96,9 @@ export async function fetchRemoteHistory(): Promise<PricePoint[]> {
   const merged = [
     ...(Array.isArray(hkn) ? hkn : []),
     ...(Array.isArray(kkvh) ? kkvh : []),
-  ].filter((p) => p.kind === 'hkn_nhan_9999' || p.kind === 'kkvh_9999')
+  ]
+    .filter((p) => p.kind === 'hkn_nhan_9999' || p.kind === 'kkvh_9999')
+    .map(normalizeHistoryPoint)
 
   return merged.sort((a, b) => a.ts - b.ts)
 }

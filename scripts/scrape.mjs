@@ -47,6 +47,34 @@ function normalizeLabel(text) {
   return String(text).replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+/** Canonical: `HH:mm:ss DD/MM/YYYY` (time then date). */
+function normalizeSourceUpdatedAt(raw) {
+  if (!raw) return undefined
+  const s = String(raw).trim().replace(/\s+/g, ' ')
+
+  let m = s.match(
+    /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*[, ]\s*(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+  )
+  if (m) {
+    const [, h, mi, sec = '00', d, mo, y] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
+  m = s.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*[, ]\s*(\d{1,2}):(\d{2})(?::(\d{2}))?$/,
+  )
+  if (m) {
+    const [, d, mo, y, h, mi, sec = '00'] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
+  return s
+}
+
 function classifyHkn(label) {
   const n = normalizeLabel(label)
   if (!n.includes('9999')) return null
@@ -86,7 +114,9 @@ function parseHkn(html) {
 
   const timeText = $('.section-time').first().text()
   if (timeText) {
-    sourceUpdatedAt = timeText.replace(/Cập nhật vào lúc:\s*/i, '').trim()
+    sourceUpdatedAt = normalizeSourceUpdatedAt(
+      timeText.replace(/Cập nhật vào lúc:\s*/i, '').trim(),
+    )
   }
 
   $('table tr').each((_, tr) => {
@@ -119,7 +149,7 @@ function parseKkvh(html) {
 
   const body = $('body').text()
   const m = body.match(/Ngày cập nhật:\s*([0-9/: ]+\d{4}\s*\d{0,2}:?\d{0,2}:?\d{0,2})/i)
-  if (m) sourceUpdatedAt = m[1].trim()
+  if (m) sourceUpdatedAt = normalizeSourceUpdatedAt(m[1].trim())
 
   $('table tr').each((_, tr) => {
     if (rows.length) return false

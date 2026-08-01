@@ -1,8 +1,9 @@
 import type { ComponentType } from 'react'
+import { SummaryPage } from './pages/SummaryPage/index.tsx'
 import { HknPage } from './pages/HknPage/index.tsx'
 import { KkvhPage } from './pages/KkvhPage/index.tsx'
 
-export type AppRouteId = 'hkn' | 'kkvh'
+export type AppRouteId = 'summary' | 'hkn' | 'kkvh'
 
 export type AppRoute = {
   id: AppRouteId
@@ -14,8 +15,14 @@ export type AppRoute = {
 /** Canonical route table — keep nav + router in sync here. */
 export const routes: AppRoute[] = [
   {
-    id: 'hkn',
+    id: 'summary',
     path: '/',
+    label: 'Tổng hợp',
+    Component: SummaryPage,
+  },
+  {
+    id: 'hkn',
+    path: '/hkn',
     label: 'Hoa Kim Nguyên',
     Component: HknPage,
   },

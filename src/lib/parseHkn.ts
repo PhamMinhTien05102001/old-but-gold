@@ -1,5 +1,6 @@
 import type { CurrentRow, StoreSnapshot } from '../types'
-import { normalizeLabel, normalizeToVndPerChi, parsePriceNumber } from './normalize'
+import { normalizeLabel, normalizeToVndPerChi, normalizeSourceUpdatedAt, parsePriceNumber } from './normalize'
+
 
 function classifyHknLabel(label: string): CurrentRow['kind'] | null {
   const n = normalizeLabel(label)
@@ -52,7 +53,7 @@ export function parseHkn(html: string): StoreSnapshot {
 
   return {
     store: 'hkn',
-    sourceUpdatedAt: extractUpdatedAt(doc),
+    sourceUpdatedAt: normalizeSourceUpdatedAt(extractUpdatedAt(doc)),
     fetchedAt: Date.now(),
     rows,
   }

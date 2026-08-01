@@ -1,5 +1,6 @@
 import type { CurrentRow, StoreSnapshot } from '../types'
-import { normalizeLabel, normalizeToVndPerChi, parsePriceNumber } from './normalize'
+import { normalizeLabel, normalizeToVndPerChi, normalizeSourceUpdatedAt, parsePriceNumber } from './normalize'
+
 
 function isKkvh9999(label: string): boolean {
   const n = normalizeLabel(label)
@@ -57,7 +58,7 @@ export function parseKkvh(html: string): StoreSnapshot {
 
   return {
     store: 'kkvh',
-    sourceUpdatedAt: extractUpdatedAt(doc),
+    sourceUpdatedAt: normalizeSourceUpdatedAt(extractUpdatedAt(doc)),
     fetchedAt: Date.now(),
     rows,
   }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
 import { filterHistory } from '../lib/history'
+import { normalizeSourceUpdatedAt } from '../lib/normalize'
 import { PriceChart } from './PriceChart'
 import { PriceCards } from './PriceCards'
 import { PriceTable } from './PriceTable'
@@ -74,7 +75,9 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
         <div>
           <h2 className="font-display mb-1 text-[1.45rem]">{storeName}</h2>
           {sourceUpdatedAt ? (
-            <p className="text-muted m-0">Nguồn cập nhật: {sourceUpdatedAt}</p>
+            <p className="text-muted m-0">
+              Nguồn cập nhật: {normalizeSourceUpdatedAt(sourceUpdatedAt)}
+            </p>
           ) : null}
         </div>
         <RangeFilter value={range} onChange={setRange} />
