@@ -2,8 +2,25 @@
   "intervalMinutes": 120,
   "minIntervalMinutes": 30,
   "maxIntervalMinutes": 120,
-  "lastCrawlAt": "2026-08-01T08:21:59.160Z",
-  "nextCrawlAt": "2026-08-01T10:21:59.160Z",
+  "lastCrawlAt": "2026-08-01T08:36:37.548Z",
+  "nextCrawlAt": "2026-08-01T10:36:37.548Z",
   "lastResult": "unchanged",
-  "lastChangedKinds": []
+  "lastChangedKinds": [],
+  "storeStatus": [
+    {
+      "store": "hkn",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "store": "kkvh",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "store": "hn",
+      "rows": 1,
+      "status": "ok"
+    }
+  ]
 }

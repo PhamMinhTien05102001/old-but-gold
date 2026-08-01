@@ -144,7 +144,7 @@ function parseHkn(html) {
     if (!kind || seen.has(kind)) return
     const buy = normalizeHkn(parsePriceNumber(cells[1]))
     const sell = normalizeHkn(parsePriceNumber(cells[2]))
-    if (!buy && !sell) return
+    if (!buy || !sell) return
     seen.add(kind)
     rows.push({ kind, label: cells[0], buy, sell })
   })
@@ -176,7 +176,7 @@ function parseKkvh(html) {
     if (!isKkvh9999(cells[0])) return
     const buy = parsePriceNumber(cells[1])
     const sell = parsePriceNumber(cells[2])
-    if (!buy && !sell) return
+    if (!buy || !sell) return
     rows.push({ kind: 'kkvh_9999', label: cells[0], buy, sell })
   })
 
@@ -207,7 +207,7 @@ function parseHn(html) {
     if (!isHnNhan9999(cells[0])) return
     const buy = parsePriceNumber(cells[1])
     const sell = parsePriceNumber(cells[2])
-    if (!buy && !sell) return
+    if (!buy || !sell) return
     rows.push({ kind: 'hn_nhan_9999', label: cells[0], buy, sell })
   })
 
@@ -368,6 +368,25 @@ async function writeHistorySplit(history) {
   }
 }
 
+function hasValidRows(snap) {
+  return Boolean(
+    snap?.rows?.some((r) => Number(r.buy) > 0 && Number(r.sell) > 0),
+  )
+}
+
+async function crawlSource(source, now) {
+  const parser = PARSERS[source.parser]
+  if (!parser) throw new Error(`Unknown parser: ${source.parser}`)
+  const html = await fetchText(source.url)
+  const snap = parser(html)
+  if (!hasValidRows(snap)) {
+    throw new Error('empty or invalid price cells')
+  }
+  snap.rows = snap.rows.filter((r) => Number(r.buy) > 0 && Number(r.sell) > 0)
+  snap.fetchedAt = now
+  return snap
+}
+
 async function main() {
   await mkdir(DATA_DIR, { recursive: true })
 
@@ -395,23 +414,57 @@ async function main() {
   const { sources } = await loadJson(SOURCES_PATH, { sources: [] })
   if (!sources.length) throw new Error('No sources in scripts/sources.json')
 
-  const snapshots = await Promise.all(
+  const prevLatest = await loadLatestCombined()
+
+  const crawlResults = await Promise.all(
     sources.map(async (source) => {
-      const parser = PARSERS[source.parser]
-      if (!parser) throw new Error(`Unknown parser: ${source.parser}`)
-      const html = await fetchText(source.url)
-      const snap = parser(html)
-      if (!snap.rows.length) {
-        throw new Error(`${source.id}: no gold 9999 rows parsed`)
+      try {
+        const snap = await crawlSource(source, now)
+        return { id: source.id, ok: true, snap }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.warn(`[${source.id}] crawl failed, keeping previous: ${message}`)
+        return { id: source.id, ok: false, error: message }
       }
-      snap.fetchedAt = now
-      return snap
     }),
   )
 
-  const prevLatest = await loadLatestCombined()
-  const changed = changedKinds(prevLatest, snapshots)
-  const priceChanged = changed.length > 0
+  const snapshots = []
+  const storeStatus = []
+  for (const result of crawlResults) {
+    if (result.ok) {
+      snapshots.push(result.snap)
+      storeStatus.push({ store: result.id, rows: result.snap.rows.length, status: 'ok' })
+      continue
+    }
+    const prev = prevLatest?.[result.id]
+    if (hasValidRows(prev)) {
+      snapshots.push(prev)
+      storeStatus.push({
+        store: result.id,
+        rows: prev.rows.length,
+        status: 'fallback',
+        error: result.error,
+      })
+    } else {
+      storeStatus.push({
+        store: result.id,
+        rows: 0,
+        status: 'failed',
+        error: result.error,
+      })
+    }
+  }
+
+  if (!snapshots.length) {
+    throw new Error('All stores failed and no previous valid data to fall back to')
+  }
+
+  const freshSnaps = snapshots.filter((s) =>
+    storeStatus.some((x) => x.store === s.store && x.status === 'ok'),
+  )
+  const changedFresh = changedKinds(prevLatest, freshSnaps)
+  const priceChanged = changedFresh.length > 0
 
   let interval = Number(schedule.intervalMinutes) || DEFAULT_INTERVAL
   if (priceChanged) {
@@ -437,7 +490,7 @@ async function main() {
   const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
   const historyPruned = cleanedPrev.length !== prevHistory.length
   const history = priceChanged
-    ? appendChangedHistory(cleanedPrev, changed, now)
+    ? appendChangedHistory(cleanedPrev, changedFresh, now)
     : cleanedPrev
 
   const nextCrawlAtMs = now + interval * 60_000
@@ -448,7 +501,8 @@ async function main() {
     lastCrawlAt: toIso(now),
     nextCrawlAt: toIso(nextCrawlAtMs),
     lastResult: priceChanged ? 'changed' : 'unchanged',
-    lastChangedKinds: priceChanged ? changed.map((c) => c.row.kind) : [],
+    lastChangedKinds: priceChanged ? changedFresh.map((c) => c.row.kind) : [],
+    storeStatus,
   }
 
   await writeLatestSplit(latest)
@@ -465,8 +519,8 @@ async function main() {
         changedKinds: nextSchedule.lastChangedKinds,
         intervalMinutes: interval,
         nextCrawlAt: nextSchedule.nextCrawlAt,
-        historyAppended: priceChanged ? changed.length : 0,
-        stores: snapshots.map((s) => ({ store: s.store, rows: s.rows.length })),
+        historyAppended: priceChanged ? changedFresh.length : 0,
+        stores: storeStatus,
       },
       null,
       2,

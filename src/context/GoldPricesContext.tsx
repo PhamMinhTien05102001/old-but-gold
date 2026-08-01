@@ -67,7 +67,8 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
         saveHistory(remote)
         setHistory(remote)
       } else {
-        setHistory(appendSnapshots([h, k, n]))
+        const valid = [h, k, n].filter((s) => s.rows.some((r) => r.buy > 0 && r.sell > 0))
+        if (valid.length) setHistory(appendSnapshots(valid))
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không tải được giá')

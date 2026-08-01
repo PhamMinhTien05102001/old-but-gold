@@ -43,7 +43,7 @@ export function parseKkvh(html: string): StoreSnapshot {
 
       const buy = normalizeToVndPerChi(parsePriceNumber(cells[1]), 'kkvh')
       const sell = normalizeToVndPerChi(parsePriceNumber(cells[2]), 'kkvh')
-      if (!buy && !sell) continue
+      if (!buy || !sell) continue
 
       rows.push({
         kind: 'kkvh_9999',

@@ -44,7 +44,7 @@ export function parseHkn(html: string): StoreSnapshot {
 
       const buy = normalizeToVndPerChi(parsePriceNumber(cells[1]), 'hkn')
       const sell = normalizeToVndPerChi(parsePriceNumber(cells[2]), 'hkn')
-      if (!buy && !sell) continue
+      if (!buy || !sell) continue
 
       seen.add(kind)
       rows.push({ kind, label, buy, sell })

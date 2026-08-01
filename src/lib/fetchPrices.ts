@@ -42,6 +42,17 @@ function emptySnapshot(store: StoreId): StoreSnapshot {
   return { store, fetchedAt: 0, rows: [] }
 }
 
+function hasValidRows(snap: StoreSnapshot | null | undefined): snap is StoreSnapshot {
+  return Boolean(snap?.rows?.some((r) => r.buy > 0 && r.sell > 0))
+}
+
+function withValidRowsOnly(snap: StoreSnapshot): StoreSnapshot {
+  return {
+    ...snap,
+    rows: snap.rows.filter((r) => r.buy > 0 && r.sell > 0),
+  }
+}
+
 async function fetchHtml(path: string): Promise<string> {
   const res = await fetch(path, { cache: 'no-store' })
   if (!res.ok) {
@@ -52,10 +63,10 @@ async function fetchHtml(path: string): Promise<string> {
 
 function normalizeSnapshot(snap: StoreSnapshot | null): StoreSnapshot | null {
   if (!snap) return null
-  return {
+  return withValidRowsOnly({
     ...snap,
     sourceUpdatedAt: normalizeSourceUpdatedAt(snap.sourceUpdatedAt),
-  }
+  })
 }
 
 function normalizeHistoryPoint(p: PricePoint): PricePoint {
@@ -76,7 +87,7 @@ export async function fetchLatestFromJson(): Promise<LatestPayload> {
   const kkvh = normalizeSnapshot(kkvhRaw)
   const hn = normalizeSnapshot(hnRaw)
 
-  if (!hkn?.rows?.length && !kkvh?.rows?.length && !hn?.rows?.length) {
+  if (!hasValidRows(hkn) && !hasValidRows(kkvh) && !hasValidRows(hn)) {
     const hint = useTestData()
       ? 'Tạo public/data-test/latest/{hkn,kkvh,hn}.json và history/{hkn,kkvh,hn}/history.json.'
       : 'Chạy workflow "Scrape gold prices" trên GitHub Actions.'
@@ -87,9 +98,9 @@ export async function fetchLatestFromJson(): Promise<LatestPayload> {
     fetchedAt:
       Math.max(hkn?.fetchedAt ?? 0, kkvh?.fetchedAt ?? 0, hn?.fetchedAt ?? 0) ||
       Date.now(),
-    hkn: hkn ?? emptySnapshot('hkn'),
-    kkvh: kkvh ?? emptySnapshot('kkvh'),
-    hn: hn ?? emptySnapshot('hn'),
+    hkn: hasValidRows(hkn) ? hkn : emptySnapshot('hkn'),
+    kkvh: hasValidRows(kkvh) ? kkvh : emptySnapshot('kkvh'),
+    hn: hasValidRows(hn) ? hn : emptySnapshot('hn'),
   }
 }
 
@@ -108,40 +119,51 @@ export async function fetchRemoteHistory(): Promise<PricePoint[]> {
   ]
     .filter(
       (p) =>
-        p.kind === 'hkn_nhan_9999' ||
-        p.kind === 'kkvh_9999' ||
-        p.kind === 'hn_nhan_9999',
+        (p.kind === 'hkn_nhan_9999' ||
+          p.kind === 'kkvh_9999' ||
+          p.kind === 'hn_nhan_9999') &&
+        p.buy > 0 &&
+        p.sell > 0,
     )
     .map(normalizeHistoryPoint)
 
   return merged.sort((a, b) => a.ts - b.ts)
 }
 
-export async function fetchHknSnapshot(): Promise<StoreSnapshot> {
-  const html = await fetchHtml('/proxy/hkn')
-  const snap = parseHkn(html)
-  if (!snap.rows.length) {
-    throw new Error('Không tìm thấy dòng vàng 9999 trên Hoa Kim Nguyên')
+async function fetchProxySnapshot(
+  store: StoreId,
+  path: string,
+  parse: (html: string) => StoreSnapshot,
+  label: string,
+): Promise<StoreSnapshot> {
+  try {
+    const html = await fetchHtml(path)
+    const snap = withValidRowsOnly(parse(html))
+    if (hasValidRows(snap)) return snap
+    console.warn(`[${store}] ${label}: empty prices, falling back to JSON`)
+  } catch (e) {
+    console.warn(
+      `[${store}] ${label}:`,
+      e instanceof Error ? e.message : e,
+      '— falling back to JSON',
+    )
   }
-  return snap
+
+  const fromJson = normalizeSnapshot(await fetchJson<StoreSnapshot>(`latest/${store}.json`))
+  if (hasValidRows(fromJson)) return fromJson
+  return emptySnapshot(store)
+}
+
+export async function fetchHknSnapshot(): Promise<StoreSnapshot> {
+  return fetchProxySnapshot('hkn', '/proxy/hkn', parseHkn, 'Hoa Kim Nguyên')
 }
 
 export async function fetchKkvhSnapshot(): Promise<StoreSnapshot> {
-  const html = await fetchHtml('/proxy/kkvh')
-  const snap = parseKkvh(html)
-  if (!snap.rows.length) {
-    throw new Error('Không tìm thấy dòng Vàng 999.9 trên Kim Khánh Việt Hùng')
-  }
-  return snap
+  return fetchProxySnapshot('kkvh', '/proxy/kkvh', parseKkvh, 'Kim Khánh Việt Hùng')
 }
 
 export async function fetchHnSnapshot(): Promise<StoreSnapshot> {
-  const html = await fetchHtml('/proxy/hn')
-  const snap = parseHn(html)
-  if (!snap.rows.length) {
-    throw new Error('Không tìm thấy dòng Vàng Nhẫn 9999 trên Hồng Ngọc')
-  }
-  return snap
+  return fetchProxySnapshot('hn', '/proxy/hn', parseHn, 'Hồng Ngọc')
 }
 
 /** Dev proxy | Dev test fixtures | Production JSON from Actions scrape. */
@@ -169,6 +191,9 @@ export async function fetchAllSnapshots(): Promise<{
       fetchKkvhSnapshot(),
       fetchHnSnapshot(),
     ])
+    if (!hasValidRows(hkn) && !hasValidRows(kkvh) && !hasValidRows(hn)) {
+      throw new Error('Không lấy được giá từ proxy và không có JSON fallback')
+    }
     return { hkn, kkvh, hn, fetchedAt: Date.now(), source: 'proxy' }
   }
 

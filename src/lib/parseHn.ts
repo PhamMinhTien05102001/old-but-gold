@@ -41,7 +41,7 @@ export function parseHn(html: string): StoreSnapshot {
 
       const buy = normalizeToVndPerChi(parsePriceNumber(cells[1]), 'hn')
       const sell = normalizeToVndPerChi(parsePriceNumber(cells[2]), 'hn')
-      if (!buy && !sell) continue
+      if (!buy || !sell) continue
 
       rows.push({
         kind: 'hn_nhan_9999',

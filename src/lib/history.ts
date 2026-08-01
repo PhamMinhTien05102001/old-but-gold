@@ -51,7 +51,7 @@ export function loadHistory(): PricePoint[] {
     if (!raw) return []
     const parsed = JSON.parse(raw) as PricePoint[]
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(isTrackedPoint)
+    return parsed.filter((p) => isTrackedPoint(p) && p.buy > 0 && p.sell > 0)
   } catch {
     return []
   }
@@ -87,7 +87,9 @@ export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
   const additions: PricePoint[] = []
 
   for (const snap of snapshots) {
+    if (!snap?.rows?.length) continue
     for (const row of snap.rows) {
+      if (!(row.buy > 0 && row.sell > 0)) continue
       const last = [...history, ...additions].filter((p) => p.kind === row.kind).at(-1)
 
       if (
