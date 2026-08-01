@@ -45,8 +45,7 @@ export function CompareTab({ hknRows, kkvhRows, history }: Props) {
       : 'Chưa đủ dữ liệu để so sánh'
 
   const filtered = useMemo(
-    () =>
-      filterHistory(history, range, ['hkn_nhan_9999', 'hkn_khau_9999', 'kkvh_9999']),
+    () => filterHistory(history, range, ['hkn_nhan_9999', 'hkn_khau_9999', 'kkvh_9999']),
     [history, range],
   )
 
@@ -72,34 +71,48 @@ export function CompareTab({ hknRows, kkvhRows, history }: Props) {
   const diff = hknSell && kkvhSell ? Math.abs(hknSell - kkvhSell) : 0
 
   return (
-    <section className="panel">
-      <header className="panel-header">
+    <section className="border-line bg-surface rounded-2xl border px-4 pt-4 pb-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2>So sánh 2 tiệm</h2>
-          <p className="muted">So giá bán ra vàng 9999 (VND/chỉ)</p>
+          <h2 className="font-display mb-1 text-[1.45rem]">So sánh 2 tiệm</h2>
+          <p className="text-muted m-0">So giá bán ra vàng 9999 (VND/chỉ)</p>
         </div>
         <RangeFilter value={range} onChange={setRange} />
       </header>
 
-      <div className="metric-grid">
-        <article className="metric-card">
-          <h3>Hoa Kim Nguyên</h3>
-          <p className="metric-main">{formatVnd(hknSell)}</p>
-          <p className="muted">Mua: {formatVnd(hknBuy)}</p>
+      <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
+        <article className="border-line bg-surface-2 rounded-xl border px-4 py-3.5">
+          <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+            Hoa Kim Nguyên
+          </h3>
+          <p className="font-display m-0 text-[1.55rem] font-bold">
+            {formatVnd(hknSell)}
+          </p>
+          <p className="text-muted m-0">Mua: {formatVnd(hknBuy)}</p>
         </article>
-        <article className="metric-card">
-          <h3>Kim Khánh Việt Hùng</h3>
-          <p className="metric-main">{formatVnd(kkvhSell)}</p>
-          <p className="muted">Mua: {formatVnd(kkvhBuy)}</p>
+        <article className="border-line bg-surface-2 rounded-xl border px-4 py-3.5">
+          <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+            Kim Khánh Việt Hùng
+          </h3>
+          <p className="font-display m-0 text-[1.55rem] font-bold">
+            {formatVnd(kkvhSell)}
+          </p>
+          <p className="text-muted m-0">Mua: {formatVnd(kkvhBuy)}</p>
         </article>
-        <article className="metric-card highlight">
-          <h3>Kết luận nhanh</h3>
-          <p className="metric-main small">{cheaper}</p>
-          <p className="muted">Chênh bán ra: {formatVnd(diff)}</p>
+        <article className="border-line rounded-xl border bg-linear-to-br from-[#fff7ed] to-[#f5e6d0] px-4 py-3.5">
+          <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+            Kết luận nhanh
+          </h3>
+          <p className="font-display m-0 text-[1.15rem] leading-snug font-bold">
+            {cheaper}
+          </p>
+          <p className="text-muted m-0">Chênh bán ra: {formatVnd(diff)}</p>
         </article>
       </div>
 
-      <h3 className="section-title">Biểu đồ bán ra theo thời gian</h3>
+      <h3 className="font-display mt-2 mb-3 text-[1.15rem]">
+        Biểu đồ bán ra theo thời gian
+      </h3>
       <PriceChart
         data={chartData}
         series={[

@@ -13,7 +13,9 @@ function isKkvh9999(label: string): boolean {
 
 function extractUpdatedAt(doc: Document): string | undefined {
   const bodyText = doc.body?.textContent ?? ''
-  const m = bodyText.match(/Ngày cập nhật:\s*([0-9/: ]+\d{4}\s*\d{0,2}:?\d{0,2}:?\d{0,2})/i)
+  const m = bodyText.match(
+    /Ngày cập nhật:\s*([0-9/: ]+\d{4}\s*\d{0,2}:?\d{0,2}:?\d{0,2})/i,
+  )
   if (m) return m[1].trim()
   const m2 = bodyText.match(/(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)
   if (m2) return m2[1].trim()

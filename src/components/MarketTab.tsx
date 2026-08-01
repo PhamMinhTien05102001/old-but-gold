@@ -42,13 +42,16 @@ export function MarketTab() {
   const latest = filtered.at(-1)
   const first = filtered[0]
   const deltaSell = latest && first ? latest.sell - first.sell : 0
+  const deltaClass = deltaSell > 0 ? 'text-up' : deltaSell < 0 ? 'text-down' : ''
 
   return (
-    <section className="panel">
-      <header className="panel-header">
+    <section className="border-line bg-surface rounded-2xl border px-4 pt-4 pb-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2>Thị trường SJC (tham chiếu)</h2>
-          <p className="muted">
+          <h2 className="font-display mb-1 text-[1.45rem]">
+            Thị trường SJC (tham chiếu)
+          </h2>
+          <p className="text-muted m-0">
             Lịch sử SJC 9999 công khai — không phải giá niêm yết HKN/KKVH. Đơn vị quy đổi
             VND/chỉ.
           </p>
@@ -56,24 +59,36 @@ export function MarketTab() {
         <RangeFilter value={range} onChange={setRange} />
       </header>
 
-      {loading ? <p className="muted">Đang tải lịch sử SJC…</p> : null}
-      {error ? <p className="error-text">{error}</p> : null}
+      {loading ? <p className="text-muted m-0">Đang tải lịch sử SJC…</p> : null}
+      {error ? <p className="text-down font-semibold">{error}</p> : null}
 
       {!loading && !error ? (
         <>
-          <div className="metric-grid">
-            <article className="metric-card">
-              <h3>Bán ra gần nhất</h3>
-              <p className="metric-main">{formatVnd(latest?.sell ?? 0)}</p>
-              <p className="muted">{latest?.date ?? '—'}</p>
+          <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
+            <article className="border-line bg-surface-2 rounded-xl border px-4 py-3.5">
+              <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+                Bán ra gần nhất
+              </h3>
+              <p className="font-display m-0 text-[1.55rem] font-bold">
+                {formatVnd(latest?.sell ?? 0)}
+              </p>
+              <p className="text-muted m-0">{latest?.date ?? '—'}</p>
             </article>
-            <article className="metric-card">
-              <h3>Mua vào gần nhất</h3>
-              <p className="metric-main">{formatVnd(latest?.buy ?? 0)}</p>
+            <article className="border-line bg-surface-2 rounded-xl border px-4 py-3.5">
+              <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+                Mua vào gần nhất
+              </h3>
+              <p className="font-display m-0 text-[1.55rem] font-bold">
+                {formatVnd(latest?.buy ?? 0)}
+              </p>
             </article>
-            <article className="metric-card">
-              <h3>Δ bán trong khoảng</h3>
-              <p className={`metric-main small ${deltaSell > 0 ? 'up' : deltaSell < 0 ? 'down' : ''}`}>
+            <article className="border-line bg-surface-2 rounded-xl border px-4 py-3.5">
+              <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+                Δ bán trong khoảng
+              </h3>
+              <p
+                className={`font-display m-0 text-[1.15rem] leading-snug font-bold ${deltaClass}`}
+              >
                 {deltaSell > 0 ? '+' : ''}
                 {formatVnd(deltaSell)}
               </p>

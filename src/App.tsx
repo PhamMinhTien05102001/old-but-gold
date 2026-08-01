@@ -1,70 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { CurrentRow, PricePoint, StoreSnapshot, TabId } from './types'
-import { fetchAllSnapshots, fetchRemoteHistory } from './lib/fetchPrices'
-import { appendSnapshots, loadHistory, mergeHistories, saveHistory } from './lib/history'
-import { RefreshBar } from './components/RefreshBar'
-import { StoreTab } from './components/StoreTab'
-import { CompareTab } from './components/CompareTab'
-import { MarketTab } from './components/MarketTab'
-import './App.css'
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'hkn', label: 'Hoa Kim Nguyên' },
-  { id: 'kkvh', label: 'Kim Khánh Việt Hùng' },
-  { id: 'compare', label: 'So sánh' },
-  { id: 'market', label: 'Thị trường SJC' },
-]
+import { NavLink, Outlet } from 'react-router-dom'
+import { routes } from './routes.ts'
+import { useGoldPrices } from './context/GoldPricesContext.tsx'
+import { RefreshBar } from './components/RefreshBar.tsx'
 
 export default function App() {
-  const [tab, setTab] = useState<TabId>('hkn')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [history, setHistory] = useState<PricePoint[]>(() => loadHistory())
-  const [hkn, setHkn] = useState<StoreSnapshot | null>(null)
-  const [kkvh, setKkvh] = useState<StoreSnapshot | null>(null)
-  const [lastFetchedAt, setLastFetchedAt] = useState<number | undefined>()
-
-  useEffect(() => {
-    if (import.meta.env.DEV) return
-    void (async () => {
-      const remote = await fetchRemoteHistory()
-      if (!remote.length) return
-      const merged = mergeHistories(loadHistory(), remote)
-      saveHistory(merged)
-      setHistory(merged)
-    })()
-  }, [])
-
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { hkn: h, kkvh: k, fetchedAt } = await fetchAllSnapshots()
-      setHkn(h)
-      setKkvh(k)
-      setLastFetchedAt(fetchedAt)
-      const next = appendSnapshots([h, k])
-      setHistory(next)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không cập nhật được giá')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void refresh()
-  }, [refresh])
-
-  const hknRows: CurrentRow[] = hkn?.rows ?? []
-  const kkvhRows: CurrentRow[] = kkvh?.rows ?? []
+  const { loading, error, lastFetchedAt, refresh } = useGoldPrices()
 
   return (
-    <div className="app">
-      <header className="hero">
-        <p className="brand">Old But Gold</p>
-        <h1>Theo dõi giá vàng 9999</h1>
-        <p className="hero-sub">
+    <div className="mx-auto max-w-[1100px] px-3.5 py-4 pb-8 sm:px-5 sm:py-6 sm:pb-12">
+      <header className="text-cream mb-5">
+        <p className="font-display text-gold mb-1.5 text-[0.95rem] tracking-[0.08em] uppercase">
+          Old But Gold
+        </p>
+        <h1 className="font-display mb-2 text-[clamp(1.8rem,4vw,2.6rem)] font-bold">
+          Theo dõi giá vàng 9999
+        </h1>
+        <p className="text-sand m-0 max-w-2xl">
           Hoa Kim Nguyên & Kim Khánh Việt Hùng — bảng giá, chênh mua/bán, biểu đồ lịch sử
           tự tích lũy, và tham chiếu thị trường SJC.
         </p>
@@ -77,48 +28,34 @@ export default function App() {
         onRefresh={() => void refresh()}
       />
 
-      <nav className="tabs" aria-label="Chọn nguồn">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={tab === t.id ? 'tab active' : 'tab'}
-            onClick={() => setTab(t.id)}
+      <nav className="mb-4 flex flex-wrap gap-2" aria-label="Chọn nguồn">
+        {routes.map((route) => (
+          <NavLink
+            key={route.id}
+            to={route.path}
+            end={route.path === '/'}
+            className={({ isActive }) =>
+              [
+                'rounded-full border px-3.5 py-2.5 font-semibold transition-colors',
+                isActive
+                  ? 'border-surface bg-surface text-ink'
+                  : 'border-gold/35 hover:border-gold/60 bg-[#2a2118]/65 text-[#f0e2cf]',
+              ].join(' ')
+            }
           >
-            {t.label}
-          </button>
+            {route.label}
+          </NavLink>
         ))}
       </nav>
 
       <main>
-        {tab === 'hkn' ? (
-          <StoreTab
-            store="hkn"
-            storeName="Hoa Kim Nguyên"
-            rows={hknRows}
-            sourceUpdatedAt={hkn?.sourceUpdatedAt}
-            history={history}
-          />
-        ) : null}
-        {tab === 'kkvh' ? (
-          <StoreTab
-            store="kkvh"
-            storeName="Kim Khánh Việt Hùng"
-            rows={kkvhRows}
-            sourceUpdatedAt={kkvh?.sourceUpdatedAt}
-            history={history}
-          />
-        ) : null}
-        {tab === 'compare' ? (
-          <CompareTab hknRows={hknRows} kkvhRows={kkvhRows} history={history} />
-        ) : null}
-        {tab === 'market' ? <MarketTab /> : null}
+        <Outlet />
       </main>
 
-      <footer className="footer">
+      <footer className="text-footer mt-5 text-[0.88rem]">
         <p>
           Giá chỉ mang tính tham khảo. Local: Vite proxy. GitHub Pages: dữ liệu từ Actions
-          scrape (<code>public/data/latest.json</code>).
+          scrape (<code className="text-gold">public/data/latest.json</code>).
         </p>
       </footer>
     </div>

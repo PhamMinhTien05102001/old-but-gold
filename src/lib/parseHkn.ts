@@ -13,7 +13,9 @@ function classifyHknLabel(label: string): CurrentRow['kind'] | null {
 function extractUpdatedAt(doc: Document): string | undefined {
   const timeEl = doc.querySelector('.section-time, p.section-time')
   if (timeEl?.textContent) {
-    const m = timeEl.textContent.match(/(\d{1,2}:\d{2}:\d{2}.+\d{2}\/\d{2}\/\d{4}|\d{1,2}:\d{2}:\d{2},\s*\d{2}\/\d{2}\/\d{4})/)
+    const m = timeEl.textContent.match(
+      /(\d{1,2}:\d{2}:\d{2}.+\d{2}\/\d{2}\/\d{4}|\d{1,2}:\d{2}:\d{2},\s*\d{2}\/\d{2}\/\d{4})/,
+    )
     if (m) return m[1].trim()
     const cleaned = timeEl.textContent.replace(/Cập nhật vào lúc:\s*/i, '').trim()
     if (cleaned) return cleaned

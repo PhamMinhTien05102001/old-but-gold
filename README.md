@@ -20,9 +20,17 @@ Xem chi tiết các bước deploy: [DEPLOY.md](./DEPLOY.md)
 - Deploy: workflow `Deploy GitHub Pages`
 - Cập nhật giá: workflow `Scrape gold prices` (cron 30 phút)
 
-## Scripts
+## Cấu trúc chính
 
-- `npm run dev` — phát triển + proxy
-- `npm run scrape` — scrape giá → `public/data`
-- `npm run build` — build production (`base: /old-but-got/`)
-- `npm run preview` — xem build kèm proxy
+- `src/routes.ts` — quản lý path + label + page component
+- `src/pages/` — HknPage, KkvhPage, ComparePage, MarketPage
+- `src/index.css` — Tailwind v4 + theme tokens (không còn `App.css`)
+
+## Routes
+
+| Path       | Page                |
+| ---------- | ------------------- |
+| `/`        | Hoa Kim Nguyên      |
+| `/kkvh`    | Kim Khánh Việt Hùng |
+| `/compare` | So sánh             |
+| `/market`  | Thị trường SJC      |

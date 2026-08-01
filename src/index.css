@@ -1,7 +1,45 @@
-:root {
-  font-family: 'Source Sans 3', system-ui, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Source Sans 3', system-ui, sans-serif;
+
+  --color-ink: #1c1612;
+  --color-muted: #6f6254;
+  --color-surface: #f7f1e6;
+  --color-surface-2: #efe6d6;
+  --color-line: #d9cbb6;
+  --color-accent: #9a3412;
+  --color-accent-2: #b45309;
+  --color-cream: #f8efe2;
+  --color-gold: #e7c08a;
+  --color-sand: #d7c7b2;
+  --color-up: #166534;
+  --color-down: #b91c1c;
+  --color-table-head: #e8dcc8;
+  --color-chart-bg: #fffaf2;
+  --color-footer: #cbbba5;
 }
 
-body {
-  margin: 0;
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply text-ink m-0 min-h-screen min-w-80 font-sans leading-snug;
+    background:
+      radial-gradient(1200px 500px at 10% -10%, rgba(180, 83, 9, 0.35), transparent 60%),
+      radial-gradient(900px 400px at 90% 0%, rgba(15, 118, 110, 0.28), transparent 55%),
+      linear-gradient(160deg, #1a1410 0%, #2b2119 45%, #1f1813 100%);
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
 }

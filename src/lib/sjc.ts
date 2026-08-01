@@ -58,8 +58,8 @@ export function parseSjcCsv(csv: string): SjcPoint[] {
     points.push({
       date,
       ts,
-      buy: Math.round(buyMil * 1_000_000 / 10),
-      sell: Math.round(sellMil * 1_000_000 / 10),
+      buy: Math.round((buyMil * 1_000_000) / 10),
+      sell: Math.round((sellMil * 1_000_000) / 10),
     })
   }
 

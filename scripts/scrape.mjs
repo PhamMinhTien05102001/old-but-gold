@@ -181,7 +181,11 @@ async function main() {
   const latest = { fetchedAt: now, hkn, kkvh }
   const historyPath = path.join(DATA_DIR, 'history.json')
   const prevHistory = await loadJson(historyPath, [])
-  const history = appendHistory(Array.isArray(prevHistory) ? prevHistory : [], [hkn, kkvh], now)
+  const history = appendHistory(
+    Array.isArray(prevHistory) ? prevHistory : [],
+    [hkn, kkvh],
+    now,
+  )
 
   // Cap history size (~1 year of 30min samples is large; keep last 20k points)
   const capped = history.slice(-20_000)

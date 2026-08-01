@@ -48,9 +48,5 @@ export function spreadPercent(buy: number, sell: number): number {
 }
 
 export function normalizeLabel(text: string): string {
-  return text
-    .replace(/\s+/g, ' ')
-    .replace(/đ/gi, 'd')
-    .trim()
-    .toLowerCase()
+  return text.replace(/\s+/g, ' ').replace(/đ/gi, 'd').trim().toLowerCase()
 }

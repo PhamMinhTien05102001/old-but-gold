@@ -34,5 +34,3 @@ export type SjcPoint = {
   buy: number
   sell: number
 }
-
-export type TabId = 'hkn' | 'kkvh' | 'compare' | 'market'

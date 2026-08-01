@@ -45,9 +45,7 @@ export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
 
   for (const snap of snapshots) {
     for (const row of snap.rows) {
-      const last = [...history, ...additions]
-        .filter((p) => p.kind === row.kind)
-        .at(-1)
+      const last = [...history, ...additions].filter((p) => p.kind === row.kind).at(-1)
 
       if (
         last &&

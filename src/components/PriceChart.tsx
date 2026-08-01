@@ -31,13 +31,21 @@ function formatTooltipLabel(ts: number): string {
   return new Date(ts).toLocaleString('vi-VN')
 }
 
-export function PriceChart({ data, series, emptyMessage = 'Chưa có dữ liệu biểu đồ' }: Props) {
+export function PriceChart({
+  data,
+  series,
+  emptyMessage = 'Chưa có dữ liệu biểu đồ',
+}: Props) {
   if (!data.length) {
-    return <div className="chart-empty">{emptyMessage}</div>
+    return (
+      <div className="border-line bg-chart-bg text-muted grid min-h-[180px] place-items-center rounded-xl border border-dashed p-4 text-center">
+        {emptyMessage}
+      </div>
+    )
   }
 
   return (
-    <div className="chart-wrap">
+    <div className="border-line bg-chart-bg min-h-80 w-full rounded-xl border px-1 pt-2 pb-1">
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e8dfd0" />

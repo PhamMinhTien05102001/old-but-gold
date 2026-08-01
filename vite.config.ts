@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // Repo name on GitHub: PhamMinhTien05102001/old-but-got
 const BASE = '/old-but-got/'
@@ -7,7 +8,7 @@ const BASE = '/old-but-got/'
 // https://vite.dev/config/
 export default defineConfig({
   base: BASE,
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     proxy: {
       '/proxy/hkn': {

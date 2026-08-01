@@ -81,11 +81,11 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
   }, [rows])
 
   return (
-    <section className="panel">
-      <header className="panel-header">
+    <section className="border-line bg-surface rounded-2xl border px-4 pt-4 pb-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2>{storeName}</h2>
-          <p className="muted">
+          <h2 className="font-display mb-1 text-[1.45rem]">{storeName}</h2>
+          <p className="text-muted m-0">
             Vàng 9999 · đơn vị VND/chỉ
             {sourceUpdatedAt ? ` · Nguồn cập nhật: ${sourceUpdatedAt}` : ''}
           </p>
@@ -94,57 +94,86 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
       </header>
 
       {!rows.length ? (
-        <p className="muted">Chưa có dữ liệu. Bấm Refresh để lấy giá.</p>
+        <p className="text-muted m-0">Chưa có dữ liệu. Bấm Refresh để lấy giá.</p>
       ) : (
         <>
-          <div className="metric-grid">
+          <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
             {rows.map((row) => {
               const prev = previousPoint(history, row.kind)
               const delta = prev ? row.sell - prev.sell : 0
+              const deltaClass =
+                delta > 0
+                  ? 'text-up font-semibold'
+                  : delta < 0
+                    ? 'text-down font-semibold'
+                    : 'text-muted'
               return (
-                <article key={row.kind} className="metric-card">
-                  <h3>{row.label}</h3>
-                  <p className="metric-main">{formatVnd(row.sell)}</p>
-                  <p className="muted">Bán ra</p>
-                  <div className="metric-row">
+                <article
+                  key={row.kind}
+                  className="border-line bg-surface-2 rounded-xl border px-4 py-3.5"
+                >
+                  <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
+                    {row.label}
+                  </h3>
+                  <p className="font-display m-0 text-[1.55rem] font-bold">
+                    {formatVnd(row.sell)}
+                  </p>
+                  <p className="text-muted m-0">Bán ra</p>
+                  <div className="my-2 flex flex-col gap-0.5 text-[0.92rem]">
                     <span>Mua: {formatVnd(row.buy)}</span>
                     <span>
                       Spread: {formatVnd(spread(row.buy, row.sell))} (
                       {spreadPercent(row.buy, row.sell).toFixed(2)}%)
                     </span>
                   </div>
-                  <p className={delta > 0 ? 'up' : delta < 0 ? 'down' : 'muted'}>
-                    Δ bán vs lần trước: {formatDelta(delta)}
-                  </p>
+                  <p className={deltaClass}>Δ bán vs lần trước: {formatDelta(delta)}</p>
                 </article>
               )
             })}
           </div>
 
-          <div className="table-wrap">
-            <table>
+          <div className="border-line mb-4 overflow-x-auto rounded-xl border">
+            <table className="w-full border-collapse text-[0.95rem]">
               <thead>
                 <tr>
-                  <th>Loại</th>
-                  <th>Mua vào</th>
-                  <th>Bán ra</th>
-                  <th>Chênh</th>
+                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
+                    Loại
+                  </th>
+                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
+                    Mua vào
+                  </th>
+                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
+                    Bán ra
+                  </th>
+                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
+                    Chênh
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.kind}>
-                    <td>{row.label}</td>
-                    <td>{formatVnd(row.buy)}</td>
-                    <td>{formatVnd(row.sell)}</td>
-                    <td>{formatVnd(spread(row.buy, row.sell))}</td>
+                  <tr key={row.kind} className="last:[&>td]:border-b-0">
+                    <td className="border-line border-b px-3.5 py-2.5 text-left">
+                      {row.label}
+                    </td>
+                    <td className="border-line border-b px-3.5 py-2.5 text-left">
+                      {formatVnd(row.buy)}
+                    </td>
+                    <td className="border-line border-b px-3.5 py-2.5 text-left">
+                      {formatVnd(row.sell)}
+                    </td>
+                    <td className="border-line border-b px-3.5 py-2.5 text-left">
+                      {formatVnd(spread(row.buy, row.sell))}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <h3 className="section-title">Biểu đồ lịch sử ({store.toUpperCase()})</h3>
+          <h3 className="font-display mt-2 mb-3 text-[1.15rem]">
+            Biểu đồ lịch sử ({store.toUpperCase()})
+          </h3>
           <PriceChart
             data={chartData}
             series={series}
