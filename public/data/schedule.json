@@ -1,12 +1,9 @@
 {
-  "intervalMinutes": 1,
-  "minIntervalMinutes": 1,
-  "maxIntervalMinutes": 1,
-  "lastCrawlAt": "2026-08-01T03:22:32.317Z",
-  "nextCrawlAt": "2026-08-01T03:23:32.317Z",
-  "lastResult": "changed",
-  "lastChangedKinds": [
-    "hkn_nhan_9999",
-    "kkvh_9999"
-  ]
+  "intervalMinutes": 120,
+  "minIntervalMinutes": 30,
+  "maxIntervalMinutes": 120,
+  "lastCrawlAt": "2026-08-01T03:30:30.512Z",
+  "nextCrawlAt": "2026-08-01T05:30:30.512Z",
+  "lastResult": "unchanged",
+  "lastChangedKinds": []
 }

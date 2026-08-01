@@ -1,7 +1,7 @@
 /**
  * Adaptive scrape for HKN + KKVH gold 9999 prices.
- * - Heartbeat: GitHub Actions every 1m (TEST)
- * - Interval X: fixed 1m for production crawl smoke test
+ * - Heartbeat: GitHub Actions every 30m
+ * - Interval X: default/max 120m, min 30m; half on change, double on stable
  * - history.json: append only when buy/sell changes
  *
  * Usage:
@@ -18,10 +18,9 @@ const ROOT = path.resolve(__dirname, '..')
 const DATA_DIR = path.join(ROOT, 'public', 'data')
 const SOURCES_PATH = path.join(__dirname, 'sources.json')
 
-// TEST: 1 phút — nhớ trả lại 30/120 khi xong smoke test production
-const MIN_INTERVAL = 1
-const MAX_INTERVAL = 1
-const DEFAULT_INTERVAL = 1
+const MIN_INTERVAL = 30
+const MAX_INTERVAL = 120
+const DEFAULT_INTERVAL = 120
 
 const force = process.argv.includes('--force')
 

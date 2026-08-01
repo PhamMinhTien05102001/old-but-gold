@@ -1,8 +1,15 @@
 import type { GoldKind, PricePoint, StoreSnapshot } from '../types'
 
 const STORAGE_KEY = 'gold-price-history-v1'
+const STORAGE_KEY_TEST = 'gold-price-history-test-v1'
 
 const TRACKED_KINDS = new Set<GoldKind>(['hkn_nhan_9999', 'kkvh_9999'])
+
+function storageKey(): string {
+  return import.meta.env.VITE_USE_TEST_DATA === 'true'
+    ? STORAGE_KEY_TEST
+    : STORAGE_KEY
+}
 
 function isTrackedPoint(p: PricePoint): boolean {
   return TRACKED_KINDS.has(p.kind)
@@ -10,7 +17,7 @@ function isTrackedPoint(p: PricePoint): boolean {
 
 export function loadHistory(): PricePoint[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey())
     if (!raw) return []
     const parsed = JSON.parse(raw) as PricePoint[]
     if (!Array.isArray(parsed)) return []
@@ -21,9 +28,8 @@ export function loadHistory(): PricePoint[] {
 }
 
 export function saveHistory(points: PricePoint[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(points))
+  localStorage.setItem(storageKey(), JSON.stringify(points))
 }
-
 function sameMinute(a: number, b: number): boolean {
   return Math.floor(a / 60_000) === Math.floor(b / 60_000)
 }
@@ -81,7 +87,7 @@ export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
 }
 
 export function clearHistory(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(storageKey())
 }
 
 export function previousPoint(

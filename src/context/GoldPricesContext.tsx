@@ -8,7 +8,11 @@ import {
   type ReactNode,
 } from 'react'
 import type { CurrentRow, PricePoint, StoreSnapshot } from '../types'
-import { fetchAllSnapshots, fetchRemoteHistory } from '../lib/fetchPrices'
+import {
+  fetchAllSnapshots,
+  fetchRemoteHistory,
+  useTestData,
+} from '../lib/fetchPrices'
 import { appendSnapshots, loadHistory, mergeHistories, saveHistory } from '../lib/history'
 
 type GoldPricesContextValue = {
@@ -34,10 +38,16 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
   const [lastFetchedAt, setLastFetchedAt] = useState<number | undefined>()
 
   useEffect(() => {
-    if (import.meta.env.DEV) return
+    // Production: merge remote history. Dev test: load fixtures from data-test.
+    if (import.meta.env.DEV && !useTestData()) return
     void (async () => {
       const remote = await fetchRemoteHistory()
       if (!remote.length) return
+      if (useTestData()) {
+        saveHistory(remote)
+        setHistory(remote)
+        return
+      }
       const merged = mergeHistories(loadHistory(), remote)
       saveHistory(merged)
       setHistory(merged)
@@ -48,11 +58,17 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setError(null)
     try {
-      const { hkn: h, kkvh: k, fetchedAt } = await fetchAllSnapshots()
+      const { hkn: h, kkvh: k, fetchedAt, source } = await fetchAllSnapshots()
       setHkn(h)
       setKkvh(k)
       setLastFetchedAt(fetchedAt)
-      setHistory(appendSnapshots([h, k]))
+      if (source === 'test') {
+        const remote = await fetchRemoteHistory()
+        saveHistory(remote)
+        setHistory(remote)
+      } else {
+        setHistory(appendSnapshots([h, k]))
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không cập nhật được giá')
     } finally {

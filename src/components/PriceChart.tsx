@@ -31,6 +31,28 @@ function formatTooltipLabel(ts: number): string {
   return new Date(ts).toLocaleString('vi-VN')
 }
 
+const Y_FLOOR = 10_000_000
+
+function yDomain(
+  data: Record<string, string | number>[],
+  series: ChartSeries[],
+): [number, number] {
+  let min = Number.POSITIVE_INFINITY
+  let max = Number.NEGATIVE_INFINITY
+  for (const row of data) {
+    for (const s of series) {
+      const v = Number(row[s.key])
+      if (!Number.isFinite(v)) continue
+      if (v < min) min = v
+      if (v > max) max = v
+    }
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [Y_FLOOR, Y_FLOOR]
+  // min Y = min(10tr, giá nhỏ nhất)
+  const yMin = Math.min(Y_FLOOR, min)
+  return [yMin, Math.max(max, yMin)]
+}
+
 export function PriceChart({
   data,
   series,
@@ -43,6 +65,8 @@ export function PriceChart({
       </div>
     )
   }
+
+  const [yMin, yMax] = yDomain(data, series)
 
   return (
     <div className="border-line bg-chart-bg min-h-80 w-full rounded-xl border px-1 pt-2 pb-1">
@@ -58,6 +82,7 @@ export function PriceChart({
             fontSize={12}
           />
           <YAxis
+            domain={[yMin, yMax]}
             tickFormatter={(v: number) => `${Math.round(v / 1_000_000)}tr`}
             stroke="#7a6a55"
             fontSize={12}

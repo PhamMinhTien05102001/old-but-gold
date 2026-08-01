@@ -1,0 +1,29 @@
+{
+  "fetchedAt": 1767175200000,
+  "hkn": {
+    "store": "hkn",
+    "sourceUpdatedAt": "17:00:00, 31/12/2025",
+    "fetchedAt": 1767175200000,
+    "rows": [
+      {
+        "kind": "hkn_nhan_9999",
+        "label": "Vàng nhẫn khâu 9999",
+        "buy": 12850000,
+        "sell": 13010000
+      }
+    ]
+  },
+  "kkvh": {
+    "store": "kkvh",
+    "sourceUpdatedAt": "31/12/2025 17:00:00",
+    "fetchedAt": 1767175200000,
+    "rows": [
+      {
+        "kind": "kkvh_9999",
+        "label": "Vàng 999.9",
+        "buy": 13030000,
+        "sell": 13250000
+      }
+    ]
+  }
+}
