@@ -2,7 +2,9 @@
  * Adaptive scrape for HKN + KKVH gold 9999 prices.
  * - Heartbeat: GitHub Actions every 30m
  * - Interval X: default/max 120m, min 30m; half on change, double on stable
- * - history.json: append only when buy/sell changes
+ * - Layout:
+ *     public/data/latest/{hkn,kkvh}.json
+ *     public/data/history/{hkn,kkvh}/history.json
  *
  * Usage:
  *   node scripts/scrape.mjs
@@ -228,12 +230,72 @@ function appendChangedHistory(history, changed, now) {
   return [...history, ...additions].slice(-20_000)
 }
 
+function latestPaths() {
+  return {
+    hkn: path.join(DATA_DIR, 'latest', 'hkn.json'),
+    kkvh: path.join(DATA_DIR, 'latest', 'kkvh.json'),
+  }
+}
+
+function historyPaths() {
+  return {
+    hkn: path.join(DATA_DIR, 'history', 'hkn', 'history.json'),
+    kkvh: path.join(DATA_DIR, 'history', 'kkvh', 'history.json'),
+  }
+}
+
+/** Combined latest object (compat with changedKinds). Migrates old flat latest.json. */
+async function loadLatestCombined() {
+  const paths = latestPaths()
+  const hkn = await loadJson(paths.hkn, null)
+  const kkvh = await loadJson(paths.kkvh, null)
+  if (hkn || kkvh) {
+    return {
+      fetchedAt: Math.max(hkn?.fetchedAt ?? 0, kkvh?.fetchedAt ?? 0),
+      hkn,
+      kkvh,
+    }
+  }
+  return loadJson(path.join(DATA_DIR, 'latest.json'), null)
+}
+
+async function loadAllHistory() {
+  const paths = historyPaths()
+  const hkn = await loadJson(paths.hkn, [])
+  const kkvh = await loadJson(paths.kkvh, [])
+  const fromSplit = [
+    ...(Array.isArray(hkn) ? hkn : []),
+    ...(Array.isArray(kkvh) ? kkvh : []),
+  ]
+  if (fromSplit.length) return fromSplit
+
+  const legacy = await loadJson(path.join(DATA_DIR, 'history.json'), [])
+  return Array.isArray(legacy) ? legacy : []
+}
+
+async function writeLatestSplit(latest) {
+  await mkdir(path.join(DATA_DIR, 'latest'), { recursive: true })
+  const paths = latestPaths()
+  for (const store of ['hkn', 'kkvh']) {
+    if (!latest[store]) continue
+    await writeFile(paths[store], JSON.stringify(latest[store], null, 2) + '\n')
+  }
+}
+
+async function writeHistorySplit(history) {
+  await mkdir(path.join(DATA_DIR, 'history', 'hkn'), { recursive: true })
+  await mkdir(path.join(DATA_DIR, 'history', 'kkvh'), { recursive: true })
+  const paths = historyPaths()
+  const hkn = history.filter((p) => p.store === 'hkn')
+  const kkvh = history.filter((p) => p.store === 'kkvh')
+  await writeFile(paths.hkn, JSON.stringify(hkn, null, 2) + '\n')
+  await writeFile(paths.kkvh, JSON.stringify(kkvh, null, 2) + '\n')
+}
+
 async function main() {
   await mkdir(DATA_DIR, { recursive: true })
 
   const schedulePath = path.join(DATA_DIR, 'schedule.json')
-  const latestPath = path.join(DATA_DIR, 'latest.json')
-  const historyPath = path.join(DATA_DIR, 'history.json')
 
   const schedule = {
     ...defaultSchedule(),
@@ -271,7 +333,7 @@ async function main() {
     }),
   )
 
-  const prevLatest = await loadJson(latestPath, null)
+  const prevLatest = await loadLatestCombined()
   const changed = changedKinds(prevLatest, snapshots)
   const priceChanged = changed.length > 0
 
@@ -295,8 +357,7 @@ async function main() {
     latest[snap.store] = snap
   }
 
-  const rawHistory = await loadJson(historyPath, [])
-  const prevHistory = Array.isArray(rawHistory) ? rawHistory : []
+  const prevHistory = await loadAllHistory()
   const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
   const historyPruned = cleanedPrev.length !== prevHistory.length
   const history = priceChanged
@@ -314,10 +375,10 @@ async function main() {
     lastChangedKinds: priceChanged ? changed.map((c) => c.row.kind) : [],
   }
 
-  await writeFile(latestPath, JSON.stringify(latest, null, 2) + '\n')
+  await writeLatestSplit(latest)
   await writeFile(schedulePath, JSON.stringify(nextSchedule, null, 2) + '\n')
   if (priceChanged || historyPruned) {
-    await writeFile(historyPath, JSON.stringify(history, null, 2) + '\n')
+    await writeHistorySplit(history)
   }
 
   console.log(

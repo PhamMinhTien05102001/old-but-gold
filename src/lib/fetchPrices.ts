@@ -1,6 +1,6 @@
 import { parseHkn } from './parseHkn'
 import { parseKkvh } from './parseKkvh'
-import type { PricePoint, StoreSnapshot } from '../types'
+import type { PricePoint, StoreId, StoreSnapshot } from '../types'
 
 export type LatestPayload = {
   fetchedAt: number
@@ -15,10 +15,28 @@ export function useTestData(): boolean {
   return import.meta.env.VITE_USE_TEST_DATA === 'true'
 }
 
-function dataUrl(file: string): string {
+function dataRoot(): string {
   const base = import.meta.env.BASE_URL || '/'
   const folder = useTestData() ? 'data-test' : 'data'
-  return `${base}${folder}/${file}`
+  return `${base}${folder}`
+}
+
+function dataUrl(relPath: string): string {
+  return `${dataRoot()}/${relPath}`
+}
+
+async function fetchJson<T>(relPath: string): Promise<T | null> {
+  try {
+    const res = await fetch(dataUrl(relPath), { cache: 'no-store' })
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
+function emptySnapshot(store: StoreId): StoreSnapshot {
+  return { store, fetchedAt: 0, rows: [] }
 }
 
 async function fetchHtml(path: string): Promise<string> {
@@ -29,29 +47,40 @@ async function fetchHtml(path: string): Promise<string> {
   return res.text()
 }
 
+/** latest/hkn.json + latest/kkvh.json */
 export async function fetchLatestFromJson(): Promise<LatestPayload> {
-  const res = await fetch(dataUrl('latest.json'), { cache: 'no-store' })
-  if (!res.ok) {
+  const [hkn, kkvh] = await Promise.all([
+    fetchJson<StoreSnapshot>('latest/hkn.json'),
+    fetchJson<StoreSnapshot>('latest/kkvh.json'),
+  ])
+
+  if (!hkn?.rows?.length && !kkvh?.rows?.length) {
     const hint = useTestData()
-      ? 'Tạo/sửa public/data-test/latest.json (và history.json).'
+      ? 'Tạo public/data-test/latest/{hkn,kkvh}.json và history/{hkn,kkvh}/history.json.'
       : 'Chạy workflow "Scrape gold prices" trên GitHub Actions.'
-    throw new Error(`Chưa có dữ liệu giá (${res.status}). ${hint}`)
+    throw new Error(`Chưa có dữ liệu giá. ${hint}`)
   }
-  return (await res.json()) as LatestPayload
+
+  return {
+    fetchedAt: Math.max(hkn?.fetchedAt ?? 0, kkvh?.fetchedAt ?? 0) || Date.now(),
+    hkn: hkn ?? emptySnapshot('hkn'),
+    kkvh: kkvh ?? emptySnapshot('kkvh'),
+  }
 }
 
+/** history/hkn/history.json + history/kkvh/history.json */
 export async function fetchRemoteHistory(): Promise<PricePoint[]> {
-  try {
-    const res = await fetch(dataUrl('history.json'), { cache: 'no-store' })
-    if (!res.ok) return []
-    const data = (await res.json()) as PricePoint[]
-    if (!Array.isArray(data)) return []
-    return data.filter(
-      (p) => p.kind === 'hkn_nhan_9999' || p.kind === 'kkvh_9999',
-    )
-  } catch {
-    return []
-  }
+  const [hkn, kkvh] = await Promise.all([
+    fetchJson<PricePoint[]>('history/hkn/history.json'),
+    fetchJson<PricePoint[]>('history/kkvh/history.json'),
+  ])
+
+  const merged = [
+    ...(Array.isArray(hkn) ? hkn : []),
+    ...(Array.isArray(kkvh) ? kkvh : []),
+  ].filter((p) => p.kind === 'hkn_nhan_9999' || p.kind === 'kkvh_9999')
+
+  return merged.sort((a, b) => a.ts - b.ts)
 }
 
 export async function fetchHknSnapshot(): Promise<StoreSnapshot> {

@@ -55,7 +55,7 @@ export default function App() {
       <footer className="text-footer mt-5 text-[0.88rem]">
         <p>
           Giá chỉ mang tính tham khảo. Local: Vite proxy. GitHub Pages: dữ liệu từ Actions
-          scrape (<code className="text-gold">public/data/latest.json</code>).
+          scrape (<code className="text-gold">public/data/latest/</code>).
         </p>
       </footer>
     </div>

@@ -9,15 +9,6 @@
     "sourceUpdatedAt": "17:24:21, 31/07/2026"
   },
   {
-    "ts": 1785548119247,
-    "store": "kkvh",
-    "kind": "kkvh_9999",
-    "label": "Vàng 999.9",
-    "buy": 13030000,
-    "sell": 13250000,
-    "sourceUpdatedAt": "01/08/2026 07:21:48"
-  },
-  {
     "ts": 1785554552317,
     "store": "hkn",
     "kind": "hkn_nhan_9999",
@@ -25,14 +16,5 @@
     "buy": 12900000,
     "sell": 13060000,
     "sourceUpdatedAt": "17:24:21, 31/07/2026"
-  },
-  {
-    "ts": 1785554552317,
-    "store": "kkvh",
-    "kind": "kkvh_9999",
-    "label": "Vàng 999.9",
-    "buy": 13070000,
-    "sell": 13290000,
-    "sourceUpdatedAt": "01/08/2026 09:52:55"
   }
 ]

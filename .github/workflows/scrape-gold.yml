@@ -42,11 +42,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/latest.json public/data/history.json public/data/schedule.json
+          git add public/data/latest public/data/history public/data/schedule.json
           if git diff --staged --quiet; then
             echo "No data file changes to commit"
           else
-            if git diff --staged --name-only | grep -q 'history.json'; then
+            if git diff --staged --name-only | grep -q '/history/'; then
               MSG="chore: gold prices changed (adaptive scrape)"
             else
               MSG="chore: gold scrape schedule update"

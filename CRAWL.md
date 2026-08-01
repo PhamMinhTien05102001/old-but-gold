@@ -13,8 +13,8 @@ Production đọc JSON đã crawl sẵn trong `public/data/`. Local (`npm run de
 |------|---------|
 | [`scripts/sources.json`](scripts/sources.json) | Danh sách domain + parser (`hkn`, `kkvh`) |
 | [`scripts/scrape.mjs`](scripts/scrape.mjs) | Orchestrator crawl + adaptive X |
-| [`public/data/latest.json`](public/data/latest.json) | Snapshot giá mới nhất |
-| [`public/data/history.json`](public/data/history.json) | Lịch sử — **chỉ append khi giá đổi** |
+| [`public/data/latest/{hkn,kkvh}.json`](public/data/latest) | Snapshot giá mới nhất theo tiệm |
+| [`public/data/history/{hkn,kkvh}/history.json`](public/data/history) | Lịch sử — **chỉ append khi giá đổi** |
 | [`public/data/schedule.json`](public/data/schedule.json) | State khoảng X và lịch crawl tiếp theo |
 | [`.github/workflows/scrape-gold.yml`](.github/workflows/scrape-gold.yml) | Heartbeat Actions + commit data |
 
@@ -25,10 +25,10 @@ GitHub Action (mỗi 30 phút)
   → node scripts/scrape.mjs
   → nếu chưa tới nextCrawlAt → skip (exit 0)
   → nếu tới hạn (hoặc --force) → crawl mọi source trong sources.json
-  → so sánh buy/sell với latest.json
-  → giá đổi: append history + X = max(30, X/2)
+  → so sánh buy/sell với latest/{store}.json
+  → giá đổi: append history/{store}/history.json + X = max(30, X/2)
   → giá không đổi: không append history + X = min(120, X*2)
-  → ghi latest.json + schedule.json
+  → ghi latest/{store}.json + schedule.json
   → commit/push nếu file đổi
 ```
 
@@ -69,11 +69,11 @@ Sau mỗi lần crawl thành công:
 Với mỗi `kind` (vd. `hkn_nhan_9999`, `kkvh_9999`):
 
 - Lấy `buy` / `sell` từ crawl mới
-- So với cùng `kind` trong `latest.json`
-- Khác → kind đó được append vào `history.json`
-- Không có kind nào đổi → **không ghi** `history.json`
+- So với cùng `kind` trong `latest/{store}.json`
+- Khác → kind đó được append vào `history/{store}/history.json`
+- Không có kind nào đổi → **không ghi** history
 
-`latest.json` và `schedule.json` vẫn được cập nhật sau mọi lần crawl (kể cả giá không đổi) để biết lần check gần nhất và X mới.
+`latest/{store}.json` và `schedule.json` vẫn được cập nhật sau mọi lần crawl (kể cả giá không đổi) để biết lần check gần nhất và X mới.
 
 ## Nguồn & parse
 

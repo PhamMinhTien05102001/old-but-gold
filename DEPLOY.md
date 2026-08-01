@@ -10,7 +10,7 @@ GitHub Pages chỉ host file tĩnh. Vite proxy (`/proxy/hkn`, `/proxy/kkvh`) **k
 Giải pháp đã làm:
 
 1. **Deploy** UI bằng GitHub Actions → Pages
-2. **Scrape thích ứng**: heartbeat; chỉ append `history.json` khi giá đổi. Bot commit bằng `GITHUB_TOKEN` **không** kích hoạt `on.push` của Deploy — Deploy lắng nghe thêm `workflow_run` sau khi scrape xong.
+2. **Scrape thích ứng**: heartbeat; chỉ append `history/{store}/history.json` khi giá đổi. Bot commit bằng `GITHUB_TOKEN` **không** kích hoạt `on.push` của Deploy — Deploy lắng nghe thêm `workflow_run` sau khi scrape xong.
 3. App trên Pages đọc JSON đó; local (`npm run dev`) vẫn dùng proxy
 
 ---
@@ -56,9 +56,9 @@ Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy t
 ### 5. App runtime
 
 - **DEV**: fetch qua Vite proxy
-- **Production (Pages)**: fetch `BASE_URL/data/latest.json`
+- **Production (Pages)**: fetch `BASE_URL/data/latest/{hkn,kkvh}.json`
 - SJC trên Pages: raw GitHub CSV (CORS OK)
-- Merge `history.json` remote với localStorage
+- Merge `history/{store}/history.json` remote với localStorage
 
 ### 6. Seed data lần đầu
 
