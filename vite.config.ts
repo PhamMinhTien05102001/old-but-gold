@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Repo name on GitHub: PhamMinhTien05102001/old-but-got
+const BASE = '/old-but-got/'
+
 // https://vite.dev/config/
 export default defineConfig({
+  base: BASE,
   plugins: [react()],
   server: {
     proxy: {

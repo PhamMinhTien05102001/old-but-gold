@@ -22,6 +22,21 @@ function sameMinute(a: number, b: number): boolean {
   return Math.floor(a / 60_000) === Math.floor(b / 60_000)
 }
 
+function pointKey(p: PricePoint): string {
+  return `${p.kind}|${p.ts}|${p.buy}|${p.sell}`
+}
+
+/** Merge remote (Actions) history with localStorage, sorted + deduped. */
+export function mergeHistories(...lists: PricePoint[][]): PricePoint[] {
+  const map = new Map<string, PricePoint>()
+  for (const list of lists) {
+    for (const p of list) {
+      map.set(pointKey(p), p)
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.ts - b.ts)
+}
+
 /** Append snapshot rows; skip if identical buy/sell already recorded in the same minute. */
 export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
   const history = loadHistory()

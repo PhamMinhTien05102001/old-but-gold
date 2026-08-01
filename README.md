@@ -6,16 +6,23 @@ Theo dõi giá vàng **9999** từ Hoa Kim Nguyên và Kim Khánh Việt Hùng (
 
 ```bash
 npm install
+npm run scrape   # optional: ghi public/data/*.json
 npm run dev
 ```
 
-Mở URL Vite in ra (ví dụ `http://localhost:5174`). **Bắt buộc** chạy qua `npm run dev` hoặc `npm run preview` vì app dùng Vite proxy để tránh CORS khi lấy HTML giá vàng.
+Mở URL Vite in ra. Local dùng Vite proxy để tránh CORS.
 
-- Refresh: lấy giá 2 tiệm, ghi snapshot vào `localStorage`
-- Tab Thị trường SJC: CSV lịch sử công khai (3 tháng+)
+## GitHub Pages
+
+Xem chi tiết các bước deploy: [DEPLOY.md](./DEPLOY.md)
+
+- Site: https://phamminhtien05102001.github.io/old-but-got/
+- Deploy: workflow `Deploy GitHub Pages`
+- Cập nhật giá: workflow `Scrape gold prices` (cron 30 phút)
 
 ## Scripts
 
 - `npm run dev` — phát triển + proxy
-- `npm run build` — build production
+- `npm run scrape` — scrape giá → `public/data`
+- `npm run build` — build production (`base: /old-but-got/`)
 - `npm run preview` — xem build kèm proxy

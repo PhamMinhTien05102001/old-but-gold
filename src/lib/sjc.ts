@@ -67,7 +67,11 @@ export function parseSjcCsv(csv: string): SjcPoint[] {
 }
 
 export async function fetchSjcHistory(): Promise<SjcPoint[]> {
-  const res = await fetch('/proxy/sjc-csv', { cache: 'no-store' })
+  const url = import.meta.env.DEV
+    ? '/proxy/sjc-csv'
+    : 'https://raw.githubusercontent.com/vkhuy/SJC-price/main/docs/data/sjc_final.csv'
+
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`Không tải được lịch sử SJC (${res.status})`)
   }

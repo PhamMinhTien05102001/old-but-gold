@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { CurrentRow, PricePoint, StoreSnapshot, TabId } from './types'
-import { fetchAllSnapshots } from './lib/fetchPrices'
-import { appendSnapshots, loadHistory } from './lib/history'
+import { fetchAllSnapshots, fetchRemoteHistory } from './lib/fetchPrices'
+import { appendSnapshots, loadHistory, mergeHistories, saveHistory } from './lib/history'
 import { RefreshBar } from './components/RefreshBar'
 import { StoreTab } from './components/StoreTab'
 import { CompareTab } from './components/CompareTab'
@@ -24,14 +24,25 @@ export default function App() {
   const [kkvh, setKkvh] = useState<StoreSnapshot | null>(null)
   const [lastFetchedAt, setLastFetchedAt] = useState<number | undefined>()
 
+  useEffect(() => {
+    if (import.meta.env.DEV) return
+    void (async () => {
+      const remote = await fetchRemoteHistory()
+      if (!remote.length) return
+      const merged = mergeHistories(loadHistory(), remote)
+      saveHistory(merged)
+      setHistory(merged)
+    })()
+  }, [])
+
   const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const { hkn: h, kkvh: k } = await fetchAllSnapshots()
+      const { hkn: h, kkvh: k, fetchedAt } = await fetchAllSnapshots()
       setHkn(h)
       setKkvh(k)
-      setLastFetchedAt(Date.now())
+      setLastFetchedAt(fetchedAt)
       const next = appendSnapshots([h, k])
       setHistory(next)
     } catch (e) {
@@ -106,8 +117,8 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Giá chỉ mang tính tham khảo. Chạy qua <code>npm run dev</code> /{' '}
-          <code>npm run preview</code> để dùng Vite proxy (tránh CORS).
+          Giá chỉ mang tính tham khảo. Local: Vite proxy. GitHub Pages: dữ liệu từ Actions
+          scrape (<code>public/data/latest.json</code>).
         </p>
       </footer>
     </div>
