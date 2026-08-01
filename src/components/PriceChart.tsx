@@ -31,7 +31,7 @@ function formatTooltipLabel(ts: number): string {
   return new Date(ts).toLocaleString('vi-VN')
 }
 
-const Y_FLOOR = 10_000_000
+const Y_PAD = 500_000
 
 function yDomain(
   data: Record<string, string | number>[],
@@ -47,9 +47,8 @@ function yDomain(
       if (v > max) max = v
     }
   }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return [Y_FLOOR, Y_FLOOR]
-  // min Y = min(10tr, giá nhỏ nhất)
-  const yMin = Math.min(Y_FLOOR, min)
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 0]
+  const yMin = Math.max(0, min - Y_PAD)
   return [yMin, Math.max(max, yMin)]
 }
 

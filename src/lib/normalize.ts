@@ -31,22 +31,6 @@ export function formatVnd(value: number): string {
   return new Intl.NumberFormat('vi-VN').format(value) + 'đ'
 }
 
-export function formatDelta(value: number): string {
-  if (!value) return '0đ'
-  const sign = value > 0 ? '+' : ''
-  return sign + formatVnd(value)
-}
-
-export function spread(buy: number, sell: number): number {
-  if (!buy || !sell) return 0
-  return sell - buy
-}
-
-export function spreadPercent(buy: number, sell: number): number {
-  if (!buy || !sell) return 0
-  return ((sell - buy) / buy) * 100
-}
-
 export function normalizeLabel(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/đ/gi, 'd').trim().toLowerCase()
 }

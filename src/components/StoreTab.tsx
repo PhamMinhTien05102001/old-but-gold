@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
 import { filterHistory } from '../lib/history'
-import { previousPoint } from '../lib/history'
-import { formatDelta, formatVnd, spread, spreadPercent } from '../lib/normalize'
 import { PriceChart } from './PriceChart'
+import { PriceCards } from './PriceCards'
+import { PriceTable } from './PriceTable'
 import { RangeFilter } from './RangeFilter'
 
 type Props = {
@@ -73,10 +73,9 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display mb-1 text-[1.45rem]">{storeName}</h2>
-          <p className="text-muted m-0">
-            Vàng 9999 · đơn vị VND/chỉ
-            {sourceUpdatedAt ? ` · Nguồn cập nhật: ${sourceUpdatedAt}` : ''}
-          </p>
+          {sourceUpdatedAt ? (
+            <p className="text-muted m-0">Nguồn cập nhật: {sourceUpdatedAt}</p>
+          ) : null}
         </div>
         <RangeFilter value={range} onChange={setRange} />
       </header>
@@ -85,79 +84,13 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
         <p className="text-muted m-0">Chưa có dữ liệu giá.</p>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
-            {rows.map((row) => {
-              const prev = previousPoint(history, row.kind)
-              const delta = prev ? row.sell - prev.sell : 0
-              const deltaClass =
-                delta > 0
-                  ? 'text-up font-semibold'
-                  : delta < 0
-                    ? 'text-down font-semibold'
-                    : 'text-muted'
-              return (
-                <article
-                  key={row.kind}
-                  className="border-line bg-surface-2 rounded-xl border px-4 py-3.5"
-                >
-                  <h3 className="text-muted mb-1.5 text-[0.95rem] font-semibold">
-                    {row.label}
-                  </h3>
-                  <p className="font-display m-0 text-[1.55rem] font-bold">
-                    {formatVnd(row.sell)}
-                  </p>
-                  <p className="text-muted m-0">Bán ra</p>
-                  <div className="my-2 flex flex-col gap-0.5 text-[0.92rem]">
-                    <span>Mua: {formatVnd(row.buy)}</span>
-                    <span>
-                      Spread: {formatVnd(spread(row.buy, row.sell))} (
-                      {spreadPercent(row.buy, row.sell).toFixed(2)}%)
-                    </span>
-                  </div>
-                  <p className={deltaClass}>Δ bán vs lần trước: {formatDelta(delta)}</p>
-                </article>
-              )
-            })}
-          </div>
-
-          <div className="border-line mb-4 overflow-x-auto rounded-xl border">
-            <table className="w-full border-collapse text-[0.95rem]">
-              <thead>
-                <tr>
-                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
-                    Loại
-                  </th>
-                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
-                    Mua vào
-                  </th>
-                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
-                    Bán ra
-                  </th>
-                  <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
-                    Chênh
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.kind} className="last:[&>td]:border-b-0">
-                    <td className="border-line border-b px-3.5 py-2.5 text-left">
-                      {row.label}
-                    </td>
-                    <td className="border-line border-b px-3.5 py-2.5 text-left">
-                      {formatVnd(row.buy)}
-                    </td>
-                    <td className="border-line border-b px-3.5 py-2.5 text-left">
-                      {formatVnd(row.sell)}
-                    </td>
-                    <td className="border-line border-b px-3.5 py-2.5 text-left">
-                      {formatVnd(spread(row.buy, row.sell))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <PriceCards
+            rows={rows}
+            history={history}
+            rangeHistory={storeHistory}
+            range={range}
+          />
+          <PriceTable rows={rows} />
 
           <h3 className="font-display mt-2 mb-3 text-[1.15rem]">
             Biểu đồ lịch sử ({store.toUpperCase()})
