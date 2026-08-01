@@ -1,6 +1,12 @@
 /**
- * Scrape HKN + KKVH gold 9999 prices and write public/data/*.json
- * Used by GitHub Actions (no Vite proxy needed).
+ * Adaptive scrape for HKN + KKVH gold 9999 prices.
+ * - Heartbeat: GitHub Actions every 30m
+ * - Interval X: default/max 120m, min 30m; half on change, double on stable
+ * - history.json: append only when buy/sell changes
+ *
+ * Usage:
+ *   node scripts/scrape.mjs
+ *   node scripts/scrape.mjs --force
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -10,9 +16,13 @@ import * as cheerio from 'cheerio'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const DATA_DIR = path.join(ROOT, 'public', 'data')
+const SOURCES_PATH = path.join(__dirname, 'sources.json')
 
-const HKN_URL = 'https://hoakimnguyen.com/tra-cuu-gia-vang/'
-const KKVH_URL = 'https://kimkhanhviethung.vn/tra-cuu-gia-vang.html'
+const MIN_INTERVAL = 30
+const MAX_INTERVAL = 120
+const DEFAULT_INTERVAL = 120
+
+const force = process.argv.includes('--force')
 
 function parsePriceNumber(raw) {
   const cleaned = String(raw)
@@ -126,37 +136,9 @@ function parseKkvh(html) {
   }
 }
 
-function sameMinute(a, b) {
-  return Math.floor(a / 60_000) === Math.floor(b / 60_000)
-}
-
-function appendHistory(history, snapshots, now) {
-  const additions = []
-  for (const snap of snapshots) {
-    for (const row of snap.rows) {
-      const last = [...history, ...additions].filter((p) => p.kind === row.kind).at(-1)
-      if (
-        last &&
-        last.buy === row.buy &&
-        last.sell === row.sell &&
-        sameMinute(last.ts, now)
-      ) {
-        continue
-      }
-      // Also skip if price unchanged from last entry (even different minute) within same day optional?
-      // Keep all price changes; skip only same-minute duplicates.
-      additions.push({
-        ts: now,
-        store: snap.store,
-        kind: row.kind,
-        label: row.label,
-        buy: row.buy,
-        sell: row.sell,
-        sourceUpdatedAt: snap.sourceUpdatedAt,
-      })
-    }
-  }
-  return [...history, ...additions]
+const PARSERS = {
+  hkn: parseHkn,
+  kkvh: parseKkvh,
 }
 
 async function loadJson(file, fallback) {
@@ -167,35 +149,186 @@ async function loadJson(file, fallback) {
   }
 }
 
+function defaultSchedule() {
+  return {
+    intervalMinutes: DEFAULT_INTERVAL,
+    minIntervalMinutes: MIN_INTERVAL,
+    maxIntervalMinutes: MAX_INTERVAL,
+    lastCrawlAt: null,
+    nextCrawlAt: null,
+    lastResult: 'init',
+  }
+}
+
+/** Accept ISO string or epoch ms; return ms or null. */
+function toEpoch(value) {
+  if (value == null || value === '') return null
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const ms = Date.parse(String(value))
+  return Number.isNaN(ms) ? null : ms
+}
+
+function toIso(ms) {
+  return new Date(ms).toISOString()
+}
+
+function clampInterval(minutes, min, max) {
+  return Math.min(max, Math.max(min, minutes))
+}
+
+function collectRows(latest) {
+  if (!latest) return []
+  const rows = []
+  for (const key of Object.keys(latest)) {
+    if (key === 'fetchedAt') continue
+    const snap = latest[key]
+    if (snap?.rows) rows.push(...snap.rows)
+  }
+  return rows
+}
+
+function rowMap(rows) {
+  const map = new Map()
+  for (const row of rows) {
+    map.set(row.kind, row)
+  }
+  return map
+}
+
+/** Returns kinds whose buy/sell differ from previous latest. */
+function changedKinds(prevLatest, nextSnapshots) {
+  const prev = rowMap(collectRows(prevLatest))
+  const changed = []
+  for (const snap of nextSnapshots) {
+    for (const row of snap.rows) {
+      const old = prev.get(row.kind)
+      if (!old || old.buy !== row.buy || old.sell !== row.sell) {
+        changed.push({ snap, row })
+      }
+    }
+  }
+  return changed
+}
+
+function appendChangedHistory(history, changed, now) {
+  const additions = changed.map(({ snap, row }) => ({
+    ts: now,
+    store: snap.store,
+    kind: row.kind,
+    label: row.label,
+    buy: row.buy,
+    sell: row.sell,
+    sourceUpdatedAt: snap.sourceUpdatedAt,
+  }))
+  return [...history, ...additions].slice(-20_000)
+}
+
 async function main() {
   await mkdir(DATA_DIR, { recursive: true })
 
-  const [hknHtml, kkvhHtml] = await Promise.all([fetchText(HKN_URL), fetchText(KKVH_URL)])
-  const hkn = parseHkn(hknHtml)
-  const kkvh = parseKkvh(kkvhHtml)
+  const schedulePath = path.join(DATA_DIR, 'schedule.json')
+  const latestPath = path.join(DATA_DIR, 'latest.json')
+  const historyPath = path.join(DATA_DIR, 'history.json')
 
-  if (!hkn.rows.length) throw new Error('HKN: no 9999 rows')
-  if (!kkvh.rows.length) throw new Error('KKVH: no 999.9 row')
+  const schedule = {
+    ...defaultSchedule(),
+    ...(await loadJson(schedulePath, {})),
+  }
+  schedule.minIntervalMinutes = MIN_INTERVAL
+  schedule.maxIntervalMinutes = MAX_INTERVAL
 
   const now = Date.now()
-  const latest = { fetchedAt: now, hkn, kkvh }
-  const historyPath = path.join(DATA_DIR, 'history.json')
-  const prevHistory = await loadJson(historyPath, [])
-  const history = appendHistory(
-    Array.isArray(prevHistory) ? prevHistory : [],
-    [hkn, kkvh],
-    now,
+  const nextCrawlMs = toEpoch(schedule.nextCrawlAt)
+  const due = force || nextCrawlMs == null || now >= nextCrawlMs
+
+  if (!due) {
+    const waitMin = Math.ceil((nextCrawlMs - now) / 60_000)
+    console.log(
+      `Skip crawl: not due yet (next in ~${waitMin}m, X=${schedule.intervalMinutes}m, nextCrawlAt=${toIso(nextCrawlMs)})`,
+    )
+    process.exit(0)
+  }
+
+  const { sources } = await loadJson(SOURCES_PATH, { sources: [] })
+  if (!sources.length) throw new Error('No sources in scripts/sources.json')
+
+  const snapshots = await Promise.all(
+    sources.map(async (source) => {
+      const parser = PARSERS[source.parser]
+      if (!parser) throw new Error(`Unknown parser: ${source.parser}`)
+      const html = await fetchText(source.url)
+      const snap = parser(html)
+      if (!snap.rows.length) {
+        throw new Error(`${source.id}: no gold 9999 rows parsed`)
+      }
+      snap.fetchedAt = now
+      return snap
+    }),
   )
 
-  // Cap history size (~1 year of 30min samples is large; keep last 20k points)
-  const capped = history.slice(-20_000)
+  const prevLatest = await loadJson(latestPath, null)
+  const changed = changedKinds(prevLatest, snapshots)
+  const priceChanged = changed.length > 0
 
-  await writeFile(path.join(DATA_DIR, 'latest.json'), JSON.stringify(latest, null, 2))
-  await writeFile(historyPath, JSON.stringify(capped, null, 2))
+  let interval = Number(schedule.intervalMinutes) || DEFAULT_INTERVAL
+  if (priceChanged) {
+    interval = clampInterval(
+      Math.floor(interval / 2),
+      schedule.minIntervalMinutes,
+      schedule.maxIntervalMinutes,
+    )
+  } else {
+    interval = clampInterval(
+      interval * 2,
+      schedule.minIntervalMinutes,
+      schedule.maxIntervalMinutes,
+    )
+  }
 
-  console.log('Wrote public/data/latest.json and history.json')
-  console.log('HKN rows:', hkn.rows)
-  console.log('KKVH rows:', kkvh.rows)
+  const latest = { fetchedAt: now }
+  for (const snap of snapshots) {
+    latest[snap.store] = snap
+  }
+
+  const prevHistory = await loadJson(historyPath, [])
+  const history = priceChanged
+    ? appendChangedHistory(Array.isArray(prevHistory) ? prevHistory : [], changed, now)
+    : Array.isArray(prevHistory)
+      ? prevHistory
+      : []
+
+  const nextCrawlAtMs = now + interval * 60_000
+  const nextSchedule = {
+    intervalMinutes: interval,
+    minIntervalMinutes: schedule.minIntervalMinutes,
+    maxIntervalMinutes: schedule.maxIntervalMinutes,
+    lastCrawlAt: toIso(now),
+    nextCrawlAt: toIso(nextCrawlAtMs),
+    lastResult: priceChanged ? 'changed' : 'unchanged',
+    lastChangedKinds: priceChanged ? changed.map((c) => c.row.kind) : [],
+  }
+
+  await writeFile(latestPath, JSON.stringify(latest, null, 2) + '\n')
+  await writeFile(schedulePath, JSON.stringify(nextSchedule, null, 2) + '\n')
+  if (priceChanged) {
+    await writeFile(historyPath, JSON.stringify(history, null, 2) + '\n')
+  }
+
+  console.log(
+    JSON.stringify(
+      {
+        forced: force,
+        priceChanged,
+        changedKinds: nextSchedule.lastChangedKinds,
+        intervalMinutes: interval,
+        nextCrawlAt: nextSchedule.nextCrawlAt,
+        historyAppended: priceChanged ? changed.length : 0,
+        stores: snapshots.map((s) => ({ store: s.store, rows: s.rows.length })),
+      },
+      null,
+      2,
+    ),
+  )
 }
 
 main().catch((err) => {

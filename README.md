@@ -1,36 +1,56 @@
 # Old But Gold
 
-Theo dõi giá vàng **9999** từ Hoa Kim Nguyên và Kim Khánh Việt Hùng (bảng + biểu đồ), kèm tham chiếu lịch sử SJC.
+App React theo dõi giá vàng 9999 (Vite + TypeScript + Tailwind + React Router).
 
-## Chạy local
+## Stack
+
+- Vite 8 + React 19 + TypeScript
+- Tailwind CSS v4 (`@tailwindcss/vite`)
+- React Router
+- Recharts
+- Cheerio (scrape Node trong `scripts/`)
+
+## Scripts
 
 ```bash
 npm install
-npm run scrape   # optional: ghi public/data/*.json
-npm run dev
+npm run dev            # dev server + Vite proxy (CORS)
+npm run build          # production build (base: /old-but-got/)
+npm run preview        # preview build + proxy
+npm run scrape         # crawl theo lịch adaptive
+npm run scrape:force   # crawl ngay (bỏ qua nextCrawlAt)
+npm run format         # Prettier
+npm run lint           # oxlint
 ```
 
-Mở URL Vite in ra. Local dùng Vite proxy để tránh CORS.
+## Cấu trúc
 
-## GitHub Pages
-
-Xem chi tiết các bước deploy: [DEPLOY.md](./DEPLOY.md)
-
-- Site: https://phamminhtien05102001.github.io/old-but-got/
-- Deploy: workflow `Deploy GitHub Pages`
-- Cập nhật giá: workflow `Scrape gold prices` (cron 30 phút)
-
-## Cấu trúc chính
-
-- `src/routes.ts` — quản lý path + label + page component
-- `src/pages/` — HknPage, KkvhPage, ComparePage, MarketPage
-- `src/index.css` — Tailwind v4 + theme tokens (không còn `App.css`)
+```
+src/
+  routes.ts                 # path + page components
+  pages/*/index.tsx         # Hkn, Kkvh, Compare, Market
+  components/               # UI (StoreTab, charts, …)
+  context/GoldPricesContext.tsx
+  lib/                      # fetch, parse, history, SJC
+scripts/
+  scrape.mjs                # crawl adaptive
+  sources.json              # danh sách domain
+public/data/                # latest.json, history.json, schedule.json
+.github/workflows/          # deploy-pages + scrape-gold
+```
 
 ## Routes
 
-| Path       | Page                |
-| ---------- | ------------------- |
-| `/`        | Hoa Kim Nguyên      |
-| `/kkvh`    | Kim Khánh Việt Hùng |
-| `/compare` | So sánh             |
-| `/market`  | Thị trường SJC      |
+| Path | Page |
+|------|------|
+| `/` | Hoa Kim Nguyên |
+| `/kkvh` | Kim Khánh Việt Hùng |
+| `/compare` | So sánh |
+| `/market` | Thị trường SJC |
+
+`base` Vite: `/old-but-got/` (GitHub Pages project site).
+
+## Tài liệu khác
+
+- [CRAWL.md](./CRAWL.md) — logic crawl / adaptive interval / data files
+- [DEPLOY.md](./DEPLOY.md) — deploy GitHub Pages

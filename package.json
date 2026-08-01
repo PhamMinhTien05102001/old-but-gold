@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "scrape": "node scripts/scrape.mjs"
+    "scrape": "node scripts/scrape.mjs",
+    "scrape:force": "node scripts/scrape.mjs --force"
   },
   "dependencies": {
     "react": "^19.2.8",

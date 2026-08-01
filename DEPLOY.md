@@ -10,7 +10,7 @@ GitHub Pages chỉ host file tĩnh. Vite proxy (`/proxy/hkn`, `/proxy/kkvh`) **k
 Giải pháp đã làm:
 
 1. **Deploy** UI bằng GitHub Actions → Pages
-2. **Scrape** định kỳ (cron 30 phút) ghi `public/data/latest.json` + `history.json`
+2. **Scrape thích ứng**: heartbeat 30 phút; khoảng X 30–120 phút; chỉ append `history.json` khi giá đổi
 3. App trên Pages đọc JSON đó; local (`npm run dev`) vẫn dùng proxy
 
 ---
@@ -46,14 +46,12 @@ Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
 
 ### 3. `.github/workflows/scrape-gold.yml`
 
-- Cron mỗi 30 phút + chạy tay
-- `node scripts/scrape.mjs`
-- Commit + push `public/data/*.json` nếu có thay đổi
+- Cron heartbeat 30 phút; manual dùng `--force`
+- Chi tiết logic: [CRAWL.md](./CRAWL.md)
 
-### 4. `scripts/scrape.mjs`
+### 4. Adaptive scrape
 
-- Fetch HTML HKN + KKVH (cheerio), chỉ vàng 9999 / 999.9
-- Chuẩn hóa VND/chỉ, ghi `latest.json` + append `history.json`
+Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy tắc X).
 
 ### 5. App runtime
 
@@ -64,14 +62,14 @@ Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
 
 ### 6. Seed data lần đầu
 
-- Chạy `npm run scrape` local → tạo `public/data/latest.json` + `history.json` để site có giá ngay khi deploy
+- `npm run scrape:force` → tạo/cập nhật data trong `public/data/`
 
 ---
 
 ## Việc bạn cần làm sau khi push
 
 1. Vào **Actions** → đợi workflow **Deploy GitHub Pages** thành công (màu xanh).
-2. (Tuỳ chọn) **Actions → Scrape gold prices → Run workflow** để cập nhật giá ngay, không chờ 30 phút.
+2. (Tuỳ chọn) **Actions → Scrape gold prices → Run workflow** để crawl ngay (`--force`).
 3. Mở: https://phamminhtien05102001.github.io/old-but-got/
 4. Nếu 404: đợi 1–2 phút, hard refresh; kiểm tra `base` trùng tên repo (`old-but-got`).
 
@@ -85,7 +83,8 @@ Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
 
 ```bash
 npm install
-npm run scrape   # cập nhật JSON thủ công
-npm run dev      # proxy live từ 2 tiệm
-npm run build    # build với base /old-but-got/
+npm run scrape         # tôn trọng lịch X (có thể skip)
+npm run scrape:force   # luôn crawl + cập nhật X
+npm run dev            # proxy live từ 2 tiệm
+npm run build          # build với base /old-but-got/
 ```

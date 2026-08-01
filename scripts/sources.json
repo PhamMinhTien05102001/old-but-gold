@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "id": "hkn",
+      "label": "Hoa Kim Nguyên",
+      "url": "https://hoakimnguyen.com/tra-cuu-gia-vang/",
+      "parser": "hkn"
+    },
+    {
+      "id": "kkvh",
+      "label": "Kim Khánh Việt Hùng",
+      "url": "https://kimkhanhviethung.vn/tra-cuu-gia-vang.html",
+      "parser": "kkvh"
+    }
+  ]
+}
