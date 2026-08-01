@@ -60,10 +60,6 @@ export function loadHistory(): PricePoint[] {
 export function saveHistory(points: PricePoint[]): void {
   localStorage.setItem(storageKey(), JSON.stringify(points))
 }
-function sameMinute(a: number, b: number): boolean {
-  return Math.floor(a / 60_000) === Math.floor(b / 60_000)
-}
-
 function pointKey(p: PricePoint): string {
   return `${p.kind}|${p.ts}|${p.buy}|${p.sell}`
 }
@@ -92,12 +88,7 @@ export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
       if (!(row.buy > 0 && row.sell > 0)) continue
       const last = [...history, ...additions].filter((p) => p.kind === row.kind).at(-1)
 
-      if (
-        last &&
-        last.buy === row.buy &&
-        last.sell === row.sell &&
-        sameMinute(last.ts, now)
-      ) {
+      if (last && last.buy === row.buy && last.sell === row.sell) {
         continue
       }
 
@@ -125,8 +116,20 @@ export function clearHistory(): void {
 export function previousPoint(
   history: PricePoint[],
   kind: PricePoint['kind'],
+  current?: Pick<PricePoint, 'buy' | 'sell'>,
 ): PricePoint | undefined {
   const matched = history.filter((p) => p.kind === kind)
+  if (!matched.length) return undefined
+
+  // Prefer last point whose buy/sell differs from current (skip plateau duplicates).
+  if (current) {
+    for (let i = matched.length - 1; i >= 0; i--) {
+      const p = matched[i]
+      if (p.buy !== current.buy || p.sell !== current.sell) return p
+    }
+    return undefined
+  }
+
   return matched.length >= 2 ? matched[matched.length - 2] : undefined
 }
 

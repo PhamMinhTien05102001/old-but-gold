@@ -32,7 +32,7 @@ export function PriceCards({ rows, history, rangeHistory, range }: Props) {
   return (
     <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
       {rows.map((row) => {
-        const prev = previousPoint(history, row.kind)
+        const prev = previousPoint(history, row.kind, row)
         const delta = prev ? row.sell - prev.sell : 0
         const low = lowestSellPoint(rangeHistory, row.kind)
 

@@ -69,7 +69,7 @@ export function SummaryTable({ rows, history }: Props) {
           <tbody>
             {sorted.map((row) => {
               const isCheapest = row.sell > 0 && row.sell === cheapestSell
-              const prev = previousPoint(history, row.kind)
+              const prev = previousPoint(history, row.kind, row)
               const delta = prev ? row.sell - prev.sell : 0
               const updated = normalizeSourceUpdatedAt(row.sourceUpdatedAt)
               const health = row.health ?? 'ok'
