@@ -10,7 +10,7 @@ GitHub Pages chỉ host file tĩnh. Vite proxy (`/proxy/hkn`, `/proxy/kkvh`) **k
 Giải pháp đã làm:
 
 1. **Deploy** UI bằng GitHub Actions → Pages
-2. **Scrape thích ứng**: heartbeat 30 phút; khoảng X 30–120 phút; chỉ append `history.json` khi giá đổi
+2. **Scrape thích ứng**: heartbeat; chỉ append `history.json` khi giá đổi. Bot commit bằng `GITHUB_TOKEN` **không** kích hoạt `on.push` của Deploy — Deploy lắng nghe thêm `workflow_run` sau khi scrape xong.
 3. App trên Pages đọc JSON đó; local (`npm run dev`) vẫn dùng proxy
 
 ---

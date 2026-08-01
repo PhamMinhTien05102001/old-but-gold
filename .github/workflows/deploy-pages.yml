@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Bot push (GITHUB_TOKEN) không kích hoạt on.push — cần trigger này sau scrape
+  workflow_run:
+    workflows: ["Scrape gold prices"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -16,10 +21,15 @@ concurrency:
 
 jobs:
   build:
+    # Bỏ qua nếu scrape fail; push / manual vẫn chạy bình thường
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Lấy commit scrape vừa push (nếu trigger từ workflow_run)
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
