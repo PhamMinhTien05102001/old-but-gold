@@ -30,9 +30,9 @@ function pickBuy(rows: CurrentRow[], prefer: CurrentRow['kind'][]): number {
 export function CompareTab({ hknRows, kkvhRows, history }: Props) {
   const [range, setRange] = useState<ChartRange>('30D')
 
-  const hknSell = pickSell(hknRows, ['hkn_nhan_9999', 'hkn_khau_9999'])
+  const hknSell = pickSell(hknRows, ['hkn_nhan_9999'])
   const kkvhSell = pickSell(kkvhRows, ['kkvh_9999'])
-  const hknBuy = pickBuy(hknRows, ['hkn_nhan_9999', 'hkn_khau_9999'])
+  const hknBuy = pickBuy(hknRows, ['hkn_nhan_9999'])
   const kkvhBuy = pickBuy(kkvhRows, ['kkvh_9999'])
 
   const cheaper =
@@ -45,7 +45,7 @@ export function CompareTab({ hknRows, kkvhRows, history }: Props) {
       : 'Chưa đủ dữ liệu để so sánh'
 
   const filtered = useMemo(
-    () => filterHistory(history, range, ['hkn_nhan_9999', 'hkn_khau_9999', 'kkvh_9999']),
+    () => filterHistory(history, range, ['hkn_nhan_9999', 'kkvh_9999']),
     [history, range],
   )
 
@@ -57,9 +57,6 @@ export function CompareTab({ hknRows, kkvhRows, history }: Props) {
         row.kkvh_sell = p.sell
         row.kkvh_buy = p.buy
       } else if (p.kind === 'hkn_nhan_9999') {
-        row.hkn_sell = p.sell
-        row.hkn_buy = p.buy
-      } else if (p.kind === 'hkn_khau_9999' && row.hkn_sell == null) {
         row.hkn_sell = p.sell
         row.hkn_buy = p.buy
       }

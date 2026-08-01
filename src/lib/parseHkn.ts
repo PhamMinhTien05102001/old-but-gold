@@ -4,10 +4,9 @@ import { normalizeLabel, normalizeToVndPerChi, parsePriceNumber } from './normal
 function classifyHknLabel(label: string): CurrentRow['kind'] | null {
   const n = normalizeLabel(label)
   if (!n.includes('9999')) return null
-  // Prefer nhẫn khâu over generic khâu
+  // Only track nhẫn 9999 — skip khâu/vĩ and other 9999 variants
   if (n.includes('nhan') || n.includes('nhẫn')) return 'hkn_nhan_9999'
-  if (n.includes('khau') || n.includes('khâu') || n.includes('vi')) return 'hkn_khau_9999'
-  return 'hkn_khau_9999'
+  return null
 }
 
 function extractUpdatedAt(doc: Document): string | undefined {

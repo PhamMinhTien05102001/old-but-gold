@@ -39,15 +39,6 @@ public/data/                # latest.json, history.json, schedule.json
 .github/workflows/          # deploy-pages + scrape-gold
 ```
 
-## Routes
-
-| Path | Page |
-|------|------|
-| `/` | Hoa Kim Nguyên |
-| `/kkvh` | Kim Khánh Việt Hùng |
-| `/compare` | So sánh |
-| `/market` | Thị trường SJC |
-
 `base` Vite: `/old-but-got/` (GitHub Pages project site).
 
 ## Tài liệu khác

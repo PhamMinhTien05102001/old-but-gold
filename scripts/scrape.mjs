@@ -48,8 +48,13 @@ function normalizeLabel(text) {
 function classifyHkn(label) {
   const n = normalizeLabel(label)
   if (!n.includes('9999')) return null
+  // Only track nhẫn 9999 — skip khâu/vĩ and other 9999 variants
   if (n.includes('nhẫn') || n.includes('nhan')) return 'hkn_nhan_9999'
-  return 'hkn_khau_9999'
+  return null
+}
+
+function isTrackedKind(kind) {
+  return kind === 'hkn_nhan_9999' || kind === 'kkvh_9999'
 }
 
 function isKkvh9999(label) {
@@ -290,12 +295,13 @@ async function main() {
     latest[snap.store] = snap
   }
 
-  const prevHistory = await loadJson(historyPath, [])
+  const rawHistory = await loadJson(historyPath, [])
+  const prevHistory = Array.isArray(rawHistory) ? rawHistory : []
+  const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
+  const historyPruned = cleanedPrev.length !== prevHistory.length
   const history = priceChanged
-    ? appendChangedHistory(Array.isArray(prevHistory) ? prevHistory : [], changed, now)
-    : Array.isArray(prevHistory)
-      ? prevHistory
-      : []
+    ? appendChangedHistory(cleanedPrev, changed, now)
+    : cleanedPrev
 
   const nextCrawlAtMs = now + interval * 60_000
   const nextSchedule = {
@@ -310,7 +316,7 @@ async function main() {
 
   await writeFile(latestPath, JSON.stringify(latest, null, 2) + '\n')
   await writeFile(schedulePath, JSON.stringify(nextSchedule, null, 2) + '\n')
-  if (priceChanged) {
+  if (priceChanged || historyPruned) {
     await writeFile(historyPath, JSON.stringify(history, null, 2) + '\n')
   }
 

@@ -14,26 +14,14 @@ type Props = {
   history: PricePoint[]
 }
 
-const KIND_SERIES: Record<
-  string,
-  { buyKey: string; sellKey: string; buyColor: string; sellColor: string }
-> = {
+/** Chart plots sell (bán ra) only. */
+const KIND_SERIES: Record<string, { sellKey: string; sellColor: string }> = {
   hkn_nhan_9999: {
-    buyKey: 'nhan_buy',
     sellKey: 'nhan_sell',
-    buyColor: '#1f6f5b',
     sellColor: '#b45309',
   },
-  hkn_khau_9999: {
-    buyKey: 'khau_buy',
-    sellKey: 'khau_sell',
-    buyColor: '#0f766e',
-    sellColor: '#c2410c',
-  },
   kkvh_9999: {
-    buyKey: 'buy',
     sellKey: 'sell',
-    buyColor: '#1d4ed8',
     sellColor: '#b91c1c',
   },
 }
@@ -46,7 +34,6 @@ function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
     const meta = KIND_SERIES[p.kind]
     if (!meta) continue
     const row = byTs.get(p.ts) ?? { ts: p.ts }
-    row[meta.buyKey] = p.buy
     row[meta.sellKey] = p.sell
     byTs.set(p.ts, row)
   }
@@ -72,10 +59,11 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
     for (const row of rows) {
       const meta = KIND_SERIES[row.kind]
       if (!meta) continue
-      out.push(
-        { key: meta.buyKey, name: `${row.label} · Mua`, color: meta.buyColor },
-        { key: meta.sellKey, name: `${row.label} · Bán`, color: meta.sellColor },
-      )
+      out.push({
+        key: meta.sellKey,
+        name: `${row.label} · Bán`,
+        color: meta.sellColor,
+      })
     }
     return out
   }, [rows])

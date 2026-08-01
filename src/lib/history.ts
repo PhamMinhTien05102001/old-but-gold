@@ -1,6 +1,12 @@
-import type { PricePoint, StoreSnapshot } from '../types'
+import type { GoldKind, PricePoint, StoreSnapshot } from '../types'
 
 const STORAGE_KEY = 'gold-price-history-v1'
+
+const TRACKED_KINDS = new Set<GoldKind>(['hkn_nhan_9999', 'kkvh_9999'])
+
+function isTrackedPoint(p: PricePoint): boolean {
+  return TRACKED_KINDS.has(p.kind)
+}
 
 export function loadHistory(): PricePoint[] {
   try {
@@ -8,7 +14,7 @@ export function loadHistory(): PricePoint[] {
     if (!raw) return []
     const parsed = JSON.parse(raw) as PricePoint[]
     if (!Array.isArray(parsed)) return []
-    return parsed
+    return parsed.filter(isTrackedPoint)
   } catch {
     return []
   }
@@ -31,6 +37,7 @@ export function mergeHistories(...lists: PricePoint[][]): PricePoint[] {
   const map = new Map<string, PricePoint>()
   for (const list of lists) {
     for (const p of list) {
+      if (!isTrackedPoint(p)) continue
       map.set(pointKey(p), p)
     }
   }

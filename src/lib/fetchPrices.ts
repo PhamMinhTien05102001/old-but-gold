@@ -36,7 +36,10 @@ export async function fetchRemoteHistory(): Promise<PricePoint[]> {
     const res = await fetch(dataUrl('history.json'), { cache: 'no-store' })
     if (!res.ok) return []
     const data = (await res.json()) as PricePoint[]
-    return Array.isArray(data) ? data : []
+    if (!Array.isArray(data)) return []
+    return data.filter(
+      (p) => p.kind === 'hkn_nhan_9999' || p.kind === 'kkvh_9999',
+    )
   } catch {
     return []
   }
