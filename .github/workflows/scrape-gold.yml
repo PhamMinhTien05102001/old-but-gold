@@ -2,8 +2,8 @@ name: Scrape gold prices
 
 on:
   schedule:
-    # Heartbeat every 30 minutes (min adaptive interval X)
-    - cron: '*/30 * * * *'
+    # TEST: heartbeat mỗi 1 phút (GitHub có thể delay / throttle)
+    - cron: '* * * * *'
   workflow_dispatch:
 
 permissions:
