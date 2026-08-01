@@ -21,8 +21,10 @@ type GoldPricesContextValue = {
   history: PricePoint[]
   hkn: StoreSnapshot | null
   kkvh: StoreSnapshot | null
+  hn: StoreSnapshot | null
   hknRows: CurrentRow[]
   kkvhRows: CurrentRow[]
+  hnRows: CurrentRow[]
 }
 
 const GoldPricesContext = createContext<GoldPricesContextValue | null>(null)
@@ -33,6 +35,7 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<PricePoint[]>(() => loadHistory())
   const [hkn, setHkn] = useState<StoreSnapshot | null>(null)
   const [kkvh, setKkvh] = useState<StoreSnapshot | null>(null)
+  const [hn, setHn] = useState<StoreSnapshot | null>(null)
 
   useEffect(() => {
     // Production: merge remote history. Dev test: load fixtures from data-test.
@@ -55,15 +58,16 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setError(null)
     try {
-      const { hkn: h, kkvh: k, source } = await fetchAllSnapshots()
+      const { hkn: h, kkvh: k, hn: n, source } = await fetchAllSnapshots()
       setHkn(h)
       setKkvh(k)
+      setHn(n)
       if (source === 'test') {
         const remote = await fetchRemoteHistory()
         saveHistory(remote)
         setHistory(remote)
       } else {
-        setHistory(appendSnapshots([h, k]))
+        setHistory(appendSnapshots([h, k, n]))
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không tải được giá')
@@ -83,10 +87,12 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
       history,
       hkn,
       kkvh,
+      hn,
       hknRows: hkn?.rows ?? [],
       kkvhRows: kkvh?.rows ?? [],
+      hnRows: hn?.rows ?? [],
     }),
-    [loading, error, history, hkn, kkvh],
+    [loading, error, history, hkn, kkvh, hn],
   )
 
   return <GoldPricesContext.Provider value={value}>{children}</GoldPricesContext.Provider>

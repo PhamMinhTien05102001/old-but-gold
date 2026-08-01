@@ -7,10 +7,13 @@ data-test/
   latest/
     hkn.json
     kkvh.json
+    hn.json
   history/
     hkn/
       history.json
     kkvh/
+      history.json
+    hn/
       history.json
 ```
 

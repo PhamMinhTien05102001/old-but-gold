@@ -25,6 +25,10 @@ const KIND_SERIES: Record<string, { sellKey: string; sellColor: string }> = {
     sellKey: 'sell',
     sellColor: '#b91c1c',
   },
+  hn_nhan_9999: {
+    sellKey: 'hn_sell',
+    sellColor: '#0f766e',
+  },
 }
 
 function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {

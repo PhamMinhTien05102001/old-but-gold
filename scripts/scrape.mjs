@@ -1,10 +1,10 @@
 /**
- * Adaptive scrape for HKN + KKVH gold 9999 prices.
+ * Adaptive scrape for HKN + KKVH + Hồng Ngọc gold 9999 prices.
  * - Heartbeat: GitHub Actions every 30m
  * - Interval X: default/max 120m, min 30m; half on change, double on stable
  * - Layout:
- *     public/data/latest/{hkn,kkvh}.json
- *     public/data/history/{hkn,kkvh}/history.json
+ *     public/data/latest/{hkn,kkvh,hn}.json
+ *     public/data/history/{hkn,kkvh,hn}/history.json
  *
  * Usage:
  *   node scripts/scrape.mjs
@@ -72,6 +72,12 @@ function normalizeSourceUpdatedAt(raw) {
     return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
   }
 
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/)
+  if (m) {
+    const [, y, mo, d, h, mi, sec = '00'] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
   return s
 }
 
@@ -84,7 +90,7 @@ function classifyHkn(label) {
 }
 
 function isTrackedKind(kind) {
-  return kind === 'hkn_nhan_9999' || kind === 'kkvh_9999'
+  return kind === 'hkn_nhan_9999' || kind === 'kkvh_9999' || kind === 'hn_nhan_9999'
 }
 
 function isKkvh9999(label) {
@@ -93,6 +99,15 @@ function isKkvh9999(label) {
   if (n.includes('999.9') || n.includes('999,9')) return true
   return false
 }
+
+function isHnNhan9999(label) {
+  const n = normalizeLabel(label)
+  if (!n.includes('9999')) return false
+  if (n.includes('nu trang') || n.includes('nữ trang') || n.includes('990')) return false
+  return n.includes('nhẫn') || n.includes('nhan')
+}
+
+const STORES = ['hkn', 'kkvh', 'hn']
 
 async function fetchText(url) {
   const res = await fetch(url, {
@@ -173,9 +188,41 @@ function parseKkvh(html) {
   }
 }
 
+function parseHn(html) {
+  const $ = cheerio.load(html)
+  const rows = []
+  let sourceUpdatedAt
+
+  const body = $('body').text()
+  const m = body.match(/Cập nhật lúc:\s*(\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}(?::\d{2})?)/i)
+  if (m) sourceUpdatedAt = normalizeSourceUpdatedAt(m[1].trim())
+
+  $('table tr').each((_, tr) => {
+    if (rows.length) return false
+    const cells = $(tr)
+      .find('td')
+      .map((__, td) => $(td).text().replace(/\s+/g, ' ').trim())
+      .get()
+    if (cells.length < 3) return
+    if (!isHnNhan9999(cells[0])) return
+    const buy = parsePriceNumber(cells[1])
+    const sell = parsePriceNumber(cells[2])
+    if (!buy && !sell) return
+    rows.push({ kind: 'hn_nhan_9999', label: cells[0], buy, sell })
+  })
+
+  return {
+    store: 'hn',
+    sourceUpdatedAt,
+    fetchedAt: Date.now(),
+    rows,
+  }
+}
+
 const PARSERS = {
   hkn: parseHkn,
   kkvh: parseKkvh,
+  hn: parseHn,
 }
 
 async function loadJson(file, fallback) {
@@ -261,42 +308,42 @@ function appendChangedHistory(history, changed, now) {
 }
 
 function latestPaths() {
-  return {
-    hkn: path.join(DATA_DIR, 'latest', 'hkn.json'),
-    kkvh: path.join(DATA_DIR, 'latest', 'kkvh.json'),
-  }
+  return Object.fromEntries(
+    STORES.map((id) => [id, path.join(DATA_DIR, 'latest', `${id}.json`)]),
+  )
 }
 
 function historyPaths() {
-  return {
-    hkn: path.join(DATA_DIR, 'history', 'hkn', 'history.json'),
-    kkvh: path.join(DATA_DIR, 'history', 'kkvh', 'history.json'),
-  }
+  return Object.fromEntries(
+    STORES.map((id) => [id, path.join(DATA_DIR, 'history', id, 'history.json')]),
+  )
 }
 
 /** Combined latest object (compat with changedKinds). Migrates old flat latest.json. */
 async function loadLatestCombined() {
   const paths = latestPaths()
-  const hkn = await loadJson(paths.hkn, null)
-  const kkvh = await loadJson(paths.kkvh, null)
-  if (hkn || kkvh) {
-    return {
-      fetchedAt: Math.max(hkn?.fetchedAt ?? 0, kkvh?.fetchedAt ?? 0),
-      hkn,
-      kkvh,
+  const snaps = {}
+  let any = false
+  let fetchedAt = 0
+  for (const id of STORES) {
+    const snap = await loadJson(paths[id], null)
+    if (snap) {
+      snaps[id] = snap
+      any = true
+      fetchedAt = Math.max(fetchedAt, snap.fetchedAt ?? 0)
     }
   }
+  if (any) return { fetchedAt, ...snaps }
   return loadJson(path.join(DATA_DIR, 'latest.json'), null)
 }
 
 async function loadAllHistory() {
   const paths = historyPaths()
-  const hkn = await loadJson(paths.hkn, [])
-  const kkvh = await loadJson(paths.kkvh, [])
-  const fromSplit = [
-    ...(Array.isArray(hkn) ? hkn : []),
-    ...(Array.isArray(kkvh) ? kkvh : []),
-  ]
+  const fromSplit = []
+  for (const id of STORES) {
+    const list = await loadJson(paths[id], [])
+    if (Array.isArray(list)) fromSplit.push(...list)
+  }
   if (fromSplit.length) return fromSplit
 
   const legacy = await loadJson(path.join(DATA_DIR, 'history.json'), [])
@@ -306,20 +353,19 @@ async function loadAllHistory() {
 async function writeLatestSplit(latest) {
   await mkdir(path.join(DATA_DIR, 'latest'), { recursive: true })
   const paths = latestPaths()
-  for (const store of ['hkn', 'kkvh']) {
+  for (const store of STORES) {
     if (!latest[store]) continue
     await writeFile(paths[store], JSON.stringify(latest[store], null, 2) + '\n')
   }
 }
 
 async function writeHistorySplit(history) {
-  await mkdir(path.join(DATA_DIR, 'history', 'hkn'), { recursive: true })
-  await mkdir(path.join(DATA_DIR, 'history', 'kkvh'), { recursive: true })
   const paths = historyPaths()
-  const hkn = history.filter((p) => p.store === 'hkn')
-  const kkvh = history.filter((p) => p.store === 'kkvh')
-  await writeFile(paths.hkn, JSON.stringify(hkn, null, 2) + '\n')
-  await writeFile(paths.kkvh, JSON.stringify(kkvh, null, 2) + '\n')
+  for (const store of STORES) {
+    await mkdir(path.join(DATA_DIR, 'history', store), { recursive: true })
+    const list = history.filter((p) => p.store === store)
+    await writeFile(paths[store], JSON.stringify(list, null, 2) + '\n')
+  }
 }
 
 async function main() {

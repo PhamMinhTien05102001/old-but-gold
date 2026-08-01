@@ -1,3 +1,5 @@
+import type { StoreId } from '../types'
+
 /** Parse Vietnamese-style price strings into VND numbers. */
 export function parsePriceNumber(raw: string): number {
   const cleaned = raw
@@ -18,7 +20,7 @@ export function parsePriceNumber(raw: string): number {
 }
 
 /** HKN lists prices in nghìn đồng (e.g. 12920 → 12_920_000). */
-export function normalizeToVndPerChi(value: number, store: 'hkn' | 'kkvh'): number {
+export function normalizeToVndPerChi(value: number, store: StoreId): number {
   if (!value) return 0
   if (store === 'hkn' && value > 0 && value < 100_000) {
     return value * 1000
@@ -58,6 +60,15 @@ export function normalizeSourceUpdatedAt(raw?: string | null): string | undefine
   )
   if (m) {
     const [, d, mo, y, h, mi, sec = '00'] = m
+    return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
+  }
+
+  // YYYY-MM-DD[ T]HH:mm[:ss] (Mão Thiệt / ISO-like)
+  m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?$/,
+  )
+  if (m) {
+    const [, y, mo, d, h, mi, sec = '00'] = m
     return `${pad2(h)}:${pad2(mi)}:${pad2(sec)} ${pad2(d)}/${pad2(mo)}/${y}`
   }
 

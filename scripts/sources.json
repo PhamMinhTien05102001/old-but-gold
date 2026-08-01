@@ -11,6 +11,12 @@
       "label": "Kim Khánh Việt Hùng",
       "url": "https://kimkhanhviethung.vn/tra-cuu-gia-vang.html",
       "parser": "kkvh"
+    },
+    {
+      "id": "hn",
+      "label": "Hồng Ngọc",
+      "url": "https://giavangmaothiet.com/gia-vang-hong-ngoc-hom-nay/",
+      "parser": "hn"
     }
   ]
 }

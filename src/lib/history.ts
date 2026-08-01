@@ -33,7 +33,7 @@ export function filterHistory(
 const STORAGE_KEY = 'gold-price-history-v1'
 const STORAGE_KEY_TEST = 'gold-price-history-test-v1'
 
-const TRACKED_KINDS = new Set<GoldKind>(['hkn_nhan_9999', 'kkvh_9999'])
+const TRACKED_KINDS = new Set<GoldKind>(['hkn_nhan_9999', 'kkvh_9999', 'hn_nhan_9999'])
 
 function storageKey(): string {
   return import.meta.env.VITE_USE_TEST_DATA === 'true'

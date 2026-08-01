@@ -1,6 +1,6 @@
-export type StoreId = 'hkn' | 'kkvh'
+export type StoreId = 'hkn' | 'kkvh' | 'hn'
 
-export type GoldKind = 'hkn_nhan_9999' | 'kkvh_9999'
+export type GoldKind = 'hkn_nhan_9999' | 'kkvh_9999' | 'hn_nhan_9999'
 
 export type PricePoint = {
   ts: number

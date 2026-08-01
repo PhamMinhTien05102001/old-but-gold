@@ -47,6 +47,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: () => '/tra-cuu-gia-vang.html',
       },
+      '/proxy/hn': {
+        target: 'https://giavangmaothiet.com',
+        changeOrigin: true,
+        rewrite: () => '/gia-vang-hong-ngoc-hom-nay/',
+      },
     },
   },
   preview: {
@@ -60,6 +65,11 @@ export default defineConfig({
         target: 'https://kimkhanhviethung.vn',
         changeOrigin: true,
         rewrite: () => '/tra-cuu-gia-vang.html',
+      },
+      '/proxy/hn': {
+        target: 'https://giavangmaothiet.com',
+        changeOrigin: true,
+        rewrite: () => '/gia-vang-hong-ngoc-hom-nay/',
       },
     },
   },

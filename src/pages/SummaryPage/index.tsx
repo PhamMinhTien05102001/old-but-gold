@@ -7,7 +7,7 @@ import {
 } from '../../lib/normalize.ts'
 
 export function SummaryPage() {
-  const { hkn, kkvh, hknRows, kkvhRows, history } = useGoldPrices()
+  const { hkn, kkvh, hn, hknRows, kkvhRows, hnRows, history } = useGoldPrices()
 
   const rows = useMemo(() => {
     const out: SummaryRow[] = []
@@ -29,11 +29,20 @@ export function SummaryPage() {
         kind: row.kind,
       })
     }
+    for (const row of hnRows) {
+      out.push({
+        storeId: 'hn',
+        storeName: 'Hồng Ngọc',
+        buy: row.buy,
+        sell: row.sell,
+        kind: row.kind,
+      })
+    }
     return out
-  }, [hknRows, kkvhRows])
+  }, [hknRows, kkvhRows, hnRows])
 
   const sourceUpdatedAt = useMemo(() => {
-    const candidates = [hkn?.sourceUpdatedAt, kkvh?.sourceUpdatedAt]
+    const candidates = [hkn?.sourceUpdatedAt, kkvh?.sourceUpdatedAt, hn?.sourceUpdatedAt]
       .map((v) => normalizeSourceUpdatedAt(v))
       .filter((v): v is string => Boolean(v))
     if (!candidates.length) return undefined
@@ -42,7 +51,7 @@ export function SummaryPage() {
       const curMs = sourceUpdatedAtToMs(cur) ?? 0
       return curMs >= bestMs ? cur : best
     })
-  }, [hkn?.sourceUpdatedAt, kkvh?.sourceUpdatedAt])
+  }, [hkn?.sourceUpdatedAt, kkvh?.sourceUpdatedAt, hn?.sourceUpdatedAt])
 
   return (
     <SummaryTable rows={rows} history={history} sourceUpdatedAt={sourceUpdatedAt} />

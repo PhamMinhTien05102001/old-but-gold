@@ -2,8 +2,9 @@ import type { ComponentType } from 'react'
 import { SummaryPage } from './pages/SummaryPage/index.tsx'
 import { HknPage } from './pages/HknPage/index.tsx'
 import { KkvhPage } from './pages/KkvhPage/index.tsx'
+import { HnPage } from './pages/HnPage/index.tsx'
 
-export type AppRouteId = 'summary' | 'hkn' | 'kkvh'
+export type AppRouteId = 'summary' | 'hkn' | 'kkvh' | 'hn'
 
 export type AppRoute = {
   id: AppRouteId
@@ -31,6 +32,12 @@ export const routes: AppRoute[] = [
     path: '/kkvh',
     label: 'Kim Khánh Việt Hùng',
     Component: KkvhPage,
+  },
+  {
+    id: 'hn',
+    path: '/hn',
+    label: 'Hồng Ngọc',
+    Component: HnPage,
   },
 ]
 
