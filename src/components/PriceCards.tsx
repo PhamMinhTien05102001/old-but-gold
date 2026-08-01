@@ -1,7 +1,7 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
 import type { ChartRange, CurrentRow, GoldKind, PricePoint } from '../types'
 import { previousPoint } from '../lib/history'
 import { formatVnd } from '../lib/normalize'
+import { SellDelta } from './SellDelta'
 
 type Props = {
   rows: CurrentRow[]
@@ -49,21 +49,11 @@ export function PriceCards({ rows, history, rangeHistory, range }: Props) {
                 <p className="font-display m-0 text-[1.55rem] font-bold">
                   {formatVnd(row.sell)}
                 </p>
-                {delta !== 0 ? (
-                  <span
-                    className={[
-                      'inline-flex items-center gap-0.5 text-[0.95rem] font-semibold',
-                      delta > 0 ? 'text-up' : 'text-down',
-                    ].join(' ')}
-                  >
-                    {delta > 0 ? (
-                      <ArrowUp className="size-4 shrink-0" aria-hidden />
-                    ) : (
-                      <ArrowDown className="size-4 shrink-0" aria-hidden />
-                    )}
-                    {formatVnd(Math.abs(delta))}
-                  </span>
-                ) : null}
+                <SellDelta
+                  delta={delta}
+                  previousTs={prev?.ts}
+                  className="text-[0.95rem]"
+                />
               </div>
               <p className="text-muted m-0">Bán ra</p>
               <p className="m-0 mt-2 text-[0.92rem]">Mua: {formatVnd(row.buy)}</p>

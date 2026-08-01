@@ -1,0 +1,14 @@
+{
+  "intervalMinutes": 120,
+  "minIntervalMinutes": 30,
+  "maxIntervalMinutes": 120,
+  "lastCrawlAt": null,
+  "nextCrawlAt": null,
+  "lastResult": "init",
+  "lastChangedKinds": [],
+  "storeStatus": [
+    { "store": "hkn", "rows": 1, "status": "ok" },
+    { "store": "kkvh", "rows": 1, "status": "ok" },
+    { "store": "hn", "rows": 1, "status": "ok" }
+  ]
+}

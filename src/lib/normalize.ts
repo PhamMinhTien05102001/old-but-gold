@@ -33,6 +33,16 @@ export function formatVnd(value: number): string {
   return new Intl.NumberFormat('vi-VN').format(value) + 'đ'
 }
 
+/** Relative time from epoch ms: `x phút trước` (< 1h) or `x tiếng trước`. */
+export function formatTimeAgo(ts: number, now = Date.now()): string {
+  const diffMs = Math.max(0, now - ts)
+  const minutes = Math.floor(diffMs / 60_000)
+  if (minutes < 1) return 'vừa xong'
+  if (minutes < 60) return `${minutes} phút trước`
+  const hours = Math.floor(minutes / 60)
+  return `${hours} tiếng trước`
+}
+
 function pad2(n: string | number): string {
   return String(n).padStart(2, '0')
 }

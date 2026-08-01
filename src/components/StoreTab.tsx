@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
 import { filterHistory } from '../lib/history'
 import { normalizeSourceUpdatedAt } from '../lib/normalize'
+import { isStoreUnhealthy, type StoreHealth } from '../lib/stores'
 import { PriceChart } from './PriceChart'
 import { PriceCards } from './PriceCards'
 import { PriceTable } from './PriceTable'
@@ -13,6 +14,8 @@ type Props = {
   rows: CurrentRow[]
   sourceUpdatedAt?: string
   history: PricePoint[]
+  health?: StoreHealth
+  sourceUrl?: string
 }
 
 /** Chart plots sell (bán ra) only. */
@@ -46,7 +49,15 @@ function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
   return Array.from(byTs.values()).sort((a, b) => Number(a.ts) - Number(b.ts))
 }
 
-export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: Props) {
+export function StoreTab({
+  store,
+  storeName,
+  rows,
+  sourceUpdatedAt,
+  history,
+  health = 'ok',
+  sourceUrl,
+}: Props) {
   const [range, setRange] = useState<ChartRange>('30D')
   const kinds = rows.map((r) => r.kind)
   const storeHistory = useMemo(
@@ -73,6 +84,8 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
     return out
   }, [rows])
 
+  const showStaleBanner = isStoreUnhealthy(health)
+
   return (
     <section className="border-line bg-surface rounded-2xl border px-4 pt-4 pb-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -86,6 +99,27 @@ export function StoreTab({ store, storeName, rows, sourceUpdatedAt, history }: P
         </div>
         <RangeFilter value={range} onChange={setRange} />
       </header>
+
+      {showStaleBanner ? (
+        <p className="border-line mb-4 rounded-xl border border-[#fca5a5] bg-[#fef2f2] px-3.5 py-3 text-[0.92rem] text-[#991b1b]">
+          {health === 'failed'
+            ? 'Không lấy được giá từ trang web chính và không còn dữ liệu lần trước.'
+            : 'Trang web chính đang không cập nhật giá (hoặc crawl lỗi). Đang hiển thị giá lần trước.'}{' '}
+          {sourceUrl ? (
+            <>
+              Xem:{' '}
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold break-all underline"
+              >
+                {sourceUrl}
+              </a>
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       {!rows.length ? (
         <p className="text-muted m-0">Chưa có dữ liệu giá.</p>

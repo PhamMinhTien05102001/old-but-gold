@@ -2,6 +2,7 @@ import { parseHkn } from './parseHkn'
 import { parseKkvh } from './parseKkvh'
 import { parseHn } from './parseHn'
 import { normalizeSourceUpdatedAt } from './normalize'
+import type { StoreHealth } from './stores'
 import type { PricePoint, StoreId, StoreSnapshot } from '../types'
 
 export type LatestPayload = {
@@ -11,7 +12,15 @@ export type LatestPayload = {
   hn: StoreSnapshot
 }
 
+export type StoreStatusMap = Record<StoreId, StoreHealth>
+
 export type SnapshotSource = 'proxy' | 'json' | 'test'
+
+const DEFAULT_STATUS: StoreStatusMap = {
+  hkn: 'ok',
+  kkvh: 'ok',
+  hn: 'ok',
+}
 
 /** `VITE_USE_TEST_DATA=true` trong `.env` → đọc `public/data-test/`. */
 export function useTestData(): boolean {
@@ -76,6 +85,22 @@ function normalizeHistoryPoint(p: PricePoint): PricePoint {
   }
 }
 
+type ScheduleFile = {
+  storeStatus?: { store: string; status: string; rows?: number }[]
+}
+
+async function fetchScheduleStatus(): Promise<StoreStatusMap> {
+  const schedule = await fetchJson<ScheduleFile>('schedule.json')
+  const map: StoreStatusMap = { ...DEFAULT_STATUS }
+  for (const entry of schedule?.storeStatus ?? []) {
+    if (entry.store !== 'hkn' && entry.store !== 'kkvh' && entry.store !== 'hn') continue
+    if (entry.status === 'ok' || entry.status === 'fallback' || entry.status === 'failed') {
+      map[entry.store] = entry.status
+    }
+  }
+  return map
+}
+
 /** latest/{hkn,kkvh,hn}.json */
 export async function fetchLatestFromJson(): Promise<LatestPayload> {
   const [hknRaw, kkvhRaw, hnRaw] = await Promise.all([
@@ -135,11 +160,11 @@ async function fetchProxySnapshot(
   path: string,
   parse: (html: string) => StoreSnapshot,
   label: string,
-): Promise<StoreSnapshot> {
+): Promise<{ snap: StoreSnapshot; status: StoreHealth }> {
   try {
     const html = await fetchHtml(path)
     const snap = withValidRowsOnly(parse(html))
-    if (hasValidRows(snap)) return snap
+    if (hasValidRows(snap)) return { snap, status: 'ok' }
     console.warn(`[${store}] ${label}: empty prices, falling back to JSON`)
   } catch (e) {
     console.warn(
@@ -150,20 +175,8 @@ async function fetchProxySnapshot(
   }
 
   const fromJson = normalizeSnapshot(await fetchJson<StoreSnapshot>(`latest/${store}.json`))
-  if (hasValidRows(fromJson)) return fromJson
-  return emptySnapshot(store)
-}
-
-export async function fetchHknSnapshot(): Promise<StoreSnapshot> {
-  return fetchProxySnapshot('hkn', '/proxy/hkn', parseHkn, 'Hoa Kim Nguyên')
-}
-
-export async function fetchKkvhSnapshot(): Promise<StoreSnapshot> {
-  return fetchProxySnapshot('kkvh', '/proxy/kkvh', parseKkvh, 'Kim Khánh Việt Hùng')
-}
-
-export async function fetchHnSnapshot(): Promise<StoreSnapshot> {
-  return fetchProxySnapshot('hn', '/proxy/hn', parseHn, 'Hồng Ngọc')
+  if (hasValidRows(fromJson)) return { snap: fromJson, status: 'fallback' }
+  return { snap: emptySnapshot(store), status: 'failed' }
 }
 
 /** Dev proxy | Dev test fixtures | Production JSON from Actions scrape. */
@@ -173,36 +186,60 @@ export async function fetchAllSnapshots(): Promise<{
   hn: StoreSnapshot
   fetchedAt: number
   source: SnapshotSource
+  storeStatus: StoreStatusMap
 }> {
   if (useTestData()) {
-    const latest = await fetchLatestFromJson()
+    const [latest, storeStatus] = await Promise.all([
+      fetchLatestFromJson(),
+      fetchScheduleStatus(),
+    ])
     return {
       hkn: latest.hkn,
       kkvh: latest.kkvh,
       hn: latest.hn,
       fetchedAt: latest.fetchedAt,
       source: 'test',
+      storeStatus,
     }
   }
 
   if (import.meta.env.DEV) {
-    const [hkn, kkvh, hn] = await Promise.all([
-      fetchHknSnapshot(),
-      fetchKkvhSnapshot(),
-      fetchHnSnapshot(),
+    const [hknRes, kkvhRes, hnRes] = await Promise.all([
+      fetchProxySnapshot('hkn', '/proxy/hkn', parseHkn, 'Hoa Kim Nguyên'),
+      fetchProxySnapshot('kkvh', '/proxy/kkvh', parseKkvh, 'Kim Khánh Việt Hùng'),
+      fetchProxySnapshot('hn', '/proxy/hn', parseHn, 'Hồng Ngọc'),
     ])
-    if (!hasValidRows(hkn) && !hasValidRows(kkvh) && !hasValidRows(hn)) {
+    if (
+      !hasValidRows(hknRes.snap) &&
+      !hasValidRows(kkvhRes.snap) &&
+      !hasValidRows(hnRes.snap)
+    ) {
       throw new Error('Không lấy được giá từ proxy và không có JSON fallback')
     }
-    return { hkn, kkvh, hn, fetchedAt: Date.now(), source: 'proxy' }
+    return {
+      hkn: hknRes.snap,
+      kkvh: kkvhRes.snap,
+      hn: hnRes.snap,
+      fetchedAt: Date.now(),
+      source: 'proxy',
+      storeStatus: {
+        hkn: hknRes.status,
+        kkvh: kkvhRes.status,
+        hn: hnRes.status,
+      },
+    }
   }
 
-  const latest = await fetchLatestFromJson()
+  const [latest, storeStatus] = await Promise.all([
+    fetchLatestFromJson(),
+    fetchScheduleStatus(),
+  ])
   return {
     hkn: latest.hkn,
     kkvh: latest.kkvh,
     hn: latest.hn,
     fetchedAt: latest.fetchedAt,
     source: 'json',
+    storeStatus,
   }
 }

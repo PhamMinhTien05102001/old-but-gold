@@ -1,8 +1,9 @@
 import { useGoldPrices } from '../../context/GoldPricesContext.tsx'
 import { StoreTab } from '../../components/StoreTab.tsx'
+import { STORE_META } from '../../lib/stores.ts'
 
 export function HknPage() {
-  const { hkn, hknRows, history } = useGoldPrices()
+  const { hkn, hknRows, history, getStoreStatus } = useGoldPrices()
 
   return (
     <StoreTab
@@ -11,6 +12,8 @@ export function HknPage() {
       rows={hknRows}
       sourceUpdatedAt={hkn?.sourceUpdatedAt}
       history={history}
+      health={getStoreStatus('hkn')}
+      sourceUrl={STORE_META.hkn.url}
     />
   )
 }
