@@ -1,13 +1,13 @@
 {
   "store": "kkvh",
-  "sourceUpdatedAt": "18:03:10 03/08/2026",
-  "fetchedAt": 1785757035558,
+  "sourceUpdatedAt": "20:10:27 03/08/2026",
+  "fetchedAt": 1785768638850,
   "rows": [
     {
       "kind": "kkvh_9999",
       "label": "Vàng 999.9",
-      "buy": 13090000,
-      "sell": 13290000
+      "buy": 13060000,
+      "sell": 13260000
     }
   ]
 }
