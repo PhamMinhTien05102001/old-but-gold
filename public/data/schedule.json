@@ -1,9 +1,9 @@
 {
-  "intervalMinutes": 60,
+  "intervalMinutes": 120,
   "minIntervalMinutes": 30,
   "maxIntervalMinutes": 120,
-  "lastCrawlAt": "2026-08-03T17:12:14.378Z",
-  "nextCrawlAt": "2026-08-03T18:12:14.378Z",
+  "lastCrawlAt": "2026-08-03T19:07:17.500Z",
+  "nextCrawlAt": "2026-08-03T21:07:17.500Z",
   "lastResult": "unchanged",
   "lastChangedKinds": [],
   "storeStatus": [
