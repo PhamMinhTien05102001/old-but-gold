@@ -1,13 +1,13 @@
 {
   "store": "hn",
-  "sourceUpdatedAt": "04:35:07 04/08/2026",
-  "fetchedAt": 1785795105734,
+  "sourceUpdatedAt": "09:35:08 04/08/2026",
+  "fetchedAt": 1785813175433,
   "rows": [
     {
       "kind": "hn_nhan_9999",
       "label": "Vàng Nhẫn 9999 Hồng Ngọc",
-      "buy": 12700000,
-      "sell": 13050000
+      "buy": 12750000,
+      "sell": 13100000
     }
   ]
 }
