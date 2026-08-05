@@ -3,11 +3,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// Repo name on GitHub: PhamMinhTien05102001/old-but-got
-const BASE = '/old-but-got/'
+// Must match GitHub Pages project path (repo name).
+const BASE = '/old-but-gold/'
 const BASE_NO_SLASH = BASE.replace(/\/$/, '')
 
-/** `/old-but-got` (no slash) does not match Vite base `/old-but-got/` — redirect before 404. */
+/** Bare `/old-but-gold` does not match Vite base `/old-but-gold/` — redirect before 404. */
 function redirectBareBase(): Plugin {
   const mount = (server: ViteDevServer | PreviewServer) => {
     const handler: Connect.NextHandleFunction = (req, res, next) => {

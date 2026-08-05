@@ -16,7 +16,7 @@ App React theo dõi giá vàng 9999 (Vite + TypeScript + Tailwind + React Router
 npm install
 cp .env.example .env   # hoặc tự tạo .env
 npm run dev            # VITE_USE_TEST_DATA=true → data-test; false → proxy live
-npm run build          # production build (base: /old-but-got/)
+npm run build          # production build (base: /old-but-gold/)
 npm run preview        # preview build + proxy
 npm run scrape         # crawl theo lịch adaptive
 npm run scrape:force   # crawl ngay (bỏ qua nextCrawlAt)
@@ -50,7 +50,7 @@ public/data-test/           # fixtures local khi VITE_USE_TEST_DATA=true
 .github/workflows/          # deploy-pages + scrape-gold
 ```
 
-`base` Vite: `/old-but-got/` (GitHub Pages project site).
+`base` Vite: `/old-but-gold/` (GitHub Pages project site — path phải trùng tên repo).
 
 ## Tài liệu khác
 

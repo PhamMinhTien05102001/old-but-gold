@@ -9,7 +9,7 @@ import { routes } from './routes.ts'
 const baseUrl = import.meta.env.BASE_URL
 const basename = baseUrl.replace(/\/$/, '') || undefined
 
-// Production hosts may serve index at `/old-but-got` without slash; normalize so relative URLs work.
+// Production hosts may serve index at `/old-but-gold` without slash; normalize so relative URLs work.
 if (basename && window.location.pathname === basename) {
   window.location.replace(`${baseUrl}${window.location.search}${window.location.hash}`)
 } else {

@@ -36,7 +36,7 @@ Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
 
 ### 1. `vite.config.ts`
 
-- `base: '/old-but-got/'` — bắt buộc vì project site nằm dưới path repo name
+- `base: '/old-but-gold/'` — bắt buộc vì project site nằm dưới path repo name
 - Giữ proxy cho `npm run dev` / `preview`
 
 ### 2. `.github/workflows/deploy-pages.yml`
@@ -70,7 +70,7 @@ Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy t
 1. Vào **Actions** → đợi workflow **Deploy GitHub Pages** thành công (màu xanh).
 2. (Tuỳ chọn) **Actions → Scrape gold prices → Run workflow** để crawl ngay (`--force`).
 3. Mở: https://phamminhtien05102001.github.io/old-but-got/
-4. Nếu 404: đợi 1–2 phút, hard refresh; kiểm tra `base` trùng tên repo (`old-but-got`).
+4. Nếu 404: đợi 1–2 phút, hard refresh; kiểm tra `base` trùng tên repo (`old-but-gold`).
 
 ### Quyền Actions (nếu scrape không push được)
 
@@ -85,5 +85,5 @@ npm install
 npm run scrape         # tôn trọng lịch X (có thể skip)
 npm run scrape:force   # luôn crawl + cập nhật X
 npm run dev            # proxy live từ 2 tiệm
-npm run build          # build với base /old-but-got/
+npm run build          # build với base /old-but-gold/
 ```
