@@ -1,13 +1,13 @@
 {
   "store": "hkn",
-  "sourceUpdatedAt": "18:53:53 05/08/2026",
-  "fetchedAt": 1785932663989,
+  "sourceUpdatedAt": "20:06:03 05/08/2026",
+  "fetchedAt": 1785941802154,
   "rows": [
     {
       "kind": "hkn_nhan_9999",
       "label": "Vàng nhẫn khâu 9999",
-      "buy": 13040000,
-      "sell": 13200000
+      "buy": 13080000,
+      "sell": 13240000
     }
   ]
 }
