@@ -1,9 +1,9 @@
 {
-  "intervalMinutes": 60,
+  "intervalMinutes": 30,
   "minIntervalMinutes": 30,
   "maxIntervalMinutes": 120,
-  "lastCrawlAt": "2026-08-05T04:16:35.098Z",
-  "nextCrawlAt": "2026-08-05T05:16:35.098Z",
+  "lastCrawlAt": "2026-08-05T07:16:35.921Z",
+  "nextCrawlAt": "2026-08-05T07:46:35.921Z",
   "lastResult": "changed",
   "lastChangedKinds": [
     "hkn_nhan_9999",
