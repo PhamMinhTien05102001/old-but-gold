@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
-import { filterHistory } from '../lib/history'
-import { normalizeSourceUpdatedAt } from '../lib/normalize'
+import { filterHistory, previousPoint } from '../lib/history'
+import { formatTimeAgo, normalizeSourceUpdatedAt } from '../lib/normalize'
 import { isStoreUnhealthy, type StoreHealth } from '../lib/stores'
 import { PriceChart } from './PriceChart'
 import { PriceCards } from './PriceCards'
@@ -85,15 +85,24 @@ export function StoreTab({
   }, [rows])
 
   const showStaleBanner = isStoreUnhealthy(health)
+  const primaryRow = rows[0]
+  const prevPoint = primaryRow
+    ? previousPoint(history, primaryRow.kind, primaryRow)
+    : undefined
+  const prevAge = prevPoint ? formatTimeAgo(prevPoint.ts) : null
+  const sourceUpdatedLabel = sourceUpdatedAt
+    ? normalizeSourceUpdatedAt(sourceUpdatedAt)
+    : undefined
 
   return (
     <section className="border-line bg-surface rounded-2xl border px-4 pt-4 pb-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
       <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display mb-1 text-[1.45rem]">{storeName}</h2>
-          {sourceUpdatedAt ? (
+          {sourceUpdatedLabel ? (
             <p className="text-muted m-0">
-              Nguồn cập nhật: {normalizeSourceUpdatedAt(sourceUpdatedAt)}
+              Nguồn cập nhật: {sourceUpdatedLabel}
+              {prevAge ? ` (cách lần cập nhật trước đó ${prevAge})` : null}
             </p>
           ) : null}
         </div>
@@ -130,6 +139,7 @@ export function StoreTab({
             history={history}
             rangeHistory={storeHistory}
             range={range}
+            sourceUpdatedAt={sourceUpdatedAt}
           />
           <PriceTable rows={rows} />
 

@@ -3,16 +3,16 @@ import { formatTimeAgo, formatVnd } from '../lib/normalize'
 
 type Props = {
   delta: number
-  /** Epoch ms of the previous price point. */
-  previousTs?: number
+  /** Epoch ms of the most recent source update (age vs now). */
+  updatedAt?: number | null
   className?: string
 }
 
-/** Sell delta with relative time, e.g. ↓ 20.000đ · 3 tiếng trước */
-export function SellDelta({ delta, previousTs, className = '' }: Props) {
+/** Sell delta with age since last update, e.g. ↓ 20.000đ · 15 phút trước */
+export function SellDelta({ delta, updatedAt, className = '' }: Props) {
   if (!delta) return null
 
-  const ago = previousTs != null ? formatTimeAgo(previousTs) : null
+  const ago = updatedAt != null ? formatTimeAgo(updatedAt) : null
 
   return (
     <span

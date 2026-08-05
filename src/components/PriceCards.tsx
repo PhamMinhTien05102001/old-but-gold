@@ -1,6 +1,6 @@
 import type { ChartRange, CurrentRow, GoldKind, PricePoint } from '../types'
 import { previousPoint } from '../lib/history'
-import { formatVnd } from '../lib/normalize'
+import { formatVnd, sourceUpdatedAtToMs } from '../lib/normalize'
 import { SellDelta } from './SellDelta'
 
 type Props = {
@@ -9,6 +9,7 @@ type Props = {
   /** History already filtered by the selected chart range. */
   rangeHistory: PricePoint[]
   range: ChartRange
+  sourceUpdatedAt?: string
 }
 
 function lowestSellPoint(points: PricePoint[], kind: GoldKind): PricePoint | undefined {
@@ -28,7 +29,15 @@ function formatLowDate(ts: number): string {
   })
 }
 
-export function PriceCards({ rows, history, rangeHistory, range }: Props) {
+export function PriceCards({
+  rows,
+  history,
+  rangeHistory,
+  range,
+  sourceUpdatedAt,
+}: Props) {
+  const updatedAt = sourceUpdatedAtToMs(sourceUpdatedAt)
+
   return (
     <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
       {rows.map((row) => {
@@ -51,7 +60,7 @@ export function PriceCards({ rows, history, rangeHistory, range }: Props) {
                 </p>
                 <SellDelta
                   delta={delta}
-                  previousTs={prev?.ts}
+                  updatedAt={updatedAt}
                   className="text-[0.95rem]"
                 />
               </div>

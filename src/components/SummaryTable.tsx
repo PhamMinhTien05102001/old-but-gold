@@ -1,7 +1,11 @@
 import { useMemo } from 'react'
 import type { CurrentRow, PricePoint } from '../types'
 import { previousPoint } from '../lib/history'
-import { formatVnd, normalizeSourceUpdatedAt } from '../lib/normalize'
+import {
+  formatVnd,
+  normalizeSourceUpdatedAt,
+  sourceUpdatedAtToMs,
+} from '../lib/normalize'
 import { storeHealthLabel, type StoreHealth } from '../lib/stores'
 import { SellDelta } from './SellDelta'
 
@@ -90,7 +94,10 @@ export function SummaryTable({ rows, history }: Props) {
                       <span className={isCheapest ? 'text-up font-semibold' : undefined}>
                         {formatVnd(row.sell)}
                       </span>
-                      <SellDelta delta={delta} previousTs={prev?.ts} />
+                      <SellDelta
+                        delta={delta}
+                        updatedAt={sourceUpdatedAtToMs(row.sourceUpdatedAt)}
+                      />
                     </span>
                   </td>
                   <td className="border-line text-muted border-b px-3.5 py-2.5 text-left whitespace-nowrap">
