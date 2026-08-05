@@ -56,8 +56,8 @@ Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy t
 ### 5. App runtime
 
 - **DEV**: fetch qua Vite proxy
-- **Production (Pages)**: fetch `BASE_URL/data/latest/{hkn,kkvh}.json`
-- Merge `history/{store}/history.json` remote với localStorage
+- **Production (Pages)**: fetch `BASE_URL/data/latest/{hkn,kkvh,hn}.json`
+- History chỉ lấy từ `history/{store}/history.json` (không dùng localStorage)
 
 ### 6. Seed data lần đầu
 

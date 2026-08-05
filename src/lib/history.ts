@@ -1,5 +1,4 @@
-import type { ChartRange, GoldKind, PricePoint, StoreSnapshot } from '../types'
-import { normalizeSourceUpdatedAt } from './normalize'
+import type { ChartRange, PricePoint } from '../types'
 
 const MS: Record<Exclude<ChartRange, 'All'>, number> = {
   '1D': 24 * 60 * 60 * 1000,
@@ -27,90 +26,6 @@ export function filterHistory(
     points = points.filter((p) => kinds.includes(p.kind))
   }
   return points
-}
-
-
-const STORAGE_KEY = 'gold-price-history-v1'
-const STORAGE_KEY_TEST = 'gold-price-history-test-v1'
-
-const TRACKED_KINDS = new Set<GoldKind>(['hkn_nhan_9999', 'kkvh_9999', 'hn_nhan_9999'])
-
-function storageKey(): string {
-  return import.meta.env.VITE_USE_TEST_DATA === 'true'
-    ? STORAGE_KEY_TEST
-    : STORAGE_KEY
-}
-
-function isTrackedPoint(p: PricePoint): boolean {
-  return TRACKED_KINDS.has(p.kind)
-}
-
-export function loadHistory(): PricePoint[] {
-  try {
-    const raw = localStorage.getItem(storageKey())
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as PricePoint[]
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter((p) => isTrackedPoint(p) && p.buy > 0 && p.sell > 0)
-  } catch {
-    return []
-  }
-}
-
-export function saveHistory(points: PricePoint[]): void {
-  localStorage.setItem(storageKey(), JSON.stringify(points))
-}
-function pointKey(p: PricePoint): string {
-  return `${p.kind}|${p.ts}|${p.buy}|${p.sell}`
-}
-
-/** Merge remote (Actions) history with localStorage, sorted + deduped. */
-export function mergeHistories(...lists: PricePoint[][]): PricePoint[] {
-  const map = new Map<string, PricePoint>()
-  for (const list of lists) {
-    for (const p of list) {
-      if (!isTrackedPoint(p)) continue
-      map.set(pointKey(p), p)
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => a.ts - b.ts)
-}
-
-/** Append snapshot rows; skip if identical buy/sell already recorded in the same minute. */
-export function appendSnapshots(snapshots: StoreSnapshot[]): PricePoint[] {
-  const history = loadHistory()
-  const now = Date.now()
-  const additions: PricePoint[] = []
-
-  for (const snap of snapshots) {
-    if (!snap?.rows?.length) continue
-    for (const row of snap.rows) {
-      if (!(row.buy > 0 && row.sell > 0)) continue
-      const last = [...history, ...additions].filter((p) => p.kind === row.kind).at(-1)
-
-      if (last && last.buy === row.buy && last.sell === row.sell) {
-        continue
-      }
-
-      additions.push({
-        ts: now,
-        store: snap.store,
-        kind: row.kind,
-        label: row.label,
-        buy: row.buy,
-        sell: row.sell,
-        sourceUpdatedAt: normalizeSourceUpdatedAt(snap.sourceUpdatedAt),
-      })
-    }
-  }
-
-  const next = [...history, ...additions]
-  saveHistory(next)
-  return next
-}
-
-export function clearHistory(): void {
-  localStorage.removeItem(storageKey())
 }
 
 export function previousPoint(
