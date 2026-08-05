@@ -28,8 +28,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Lấy commit scrape vừa push (nếu trigger từ workflow_run)
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          # workflow_run.head_sha = commit scrape BẮT ĐẦU (trước khi bot push data).
+          # Luôn lấy tip `main` để Pages nhận JSON scrape mới nhất.
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v4
