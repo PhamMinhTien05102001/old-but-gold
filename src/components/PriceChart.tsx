@@ -31,7 +31,12 @@ function formatTooltipLabel(ts: number): string {
   return new Date(ts).toLocaleString('vi-VN')
 }
 
-const Y_PAD = 500_000
+/** Padding as a fraction of the data span (keeps small swings readable). */
+const Y_PAD_RATIO = 0.12
+/** Floor pad when prices barely move (đồng). */
+const Y_PAD_MIN = 30_000
+/** When all values are equal, pad by this fraction of the value. */
+const Y_FLAT_RATIO = 0.004
 
 function yDomain(
   data: Record<string, string | number>[],
@@ -48,8 +53,62 @@ function yDomain(
     }
   }
   if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 0]
-  const yMin = Math.max(0, min - Y_PAD)
-  return [yMin, Math.max(max, yMin)]
+
+  const span = max - min
+  const pad =
+    span === 0
+      ? Math.max(min * Y_FLAT_RATIO, Y_PAD_MIN)
+      : Math.max(span * Y_PAD_RATIO, Y_PAD_MIN)
+
+  const yMin = Math.max(0, min - pad)
+  const yMax = max + pad
+  return yMax > yMin ? [yMin, yMax] : [yMin, yMin + Y_PAD_MIN]
+}
+
+function formatYTick(v: number, yMin: number, yMax: number): string {
+  const range = yMax - yMin
+  const tr = v / 1_000_000
+  if (range < 500_000) return `${tr.toFixed(2)}tr`
+  if (range < 2_000_000) return `${tr.toFixed(1)}tr`
+  return `${Math.round(tr)}tr`
+}
+
+function previousSeriesValue(
+  data: Record<string, string | number>[],
+  dataKey: string,
+  index: number,
+): number | undefined {
+  for (let i = index - 1; i >= 0; i--) {
+    const v = Number(data[i]?.[dataKey])
+    if (Number.isFinite(v)) return v
+  }
+  return undefined
+}
+
+/** Dot only at first sample and whenever this series' price changes. */
+function ChangeDot({
+  cx,
+  cy,
+  index,
+  dataKey,
+  color,
+  data,
+}: {
+  cx?: number
+  cy?: number
+  index?: number
+  dataKey: string
+  color: string
+  data: Record<string, string | number>[]
+}) {
+  if (cx == null || cy == null || index == null) return null
+  const value = Number(data[index]?.[dataKey])
+  if (!Number.isFinite(value)) return null
+
+  const prev = previousSeriesValue(data, dataKey, index)
+  if (prev !== undefined && prev === value) return null
+
+  return <circle cx={cx} cy={cy} r={4} fill="#fffaf3" stroke={color} strokeWidth={2} />
 }
 
 export function PriceChart({
@@ -82,14 +141,15 @@ export function PriceChart({
           />
           <YAxis
             domain={[yMin, yMax]}
-            tickFormatter={(v: number) => `${Math.round(v / 1_000_000)}tr`}
+            tickFormatter={(v: number) => formatYTick(v, yMin, yMax)}
             stroke="#7a6a55"
             fontSize={12}
-            width={48}
+            width={52}
           />
           <Tooltip
             labelFormatter={(label) => formatTooltipLabel(Number(label))}
             formatter={(value) => formatVnd(Number(value ?? 0))}
+            cursor={{ stroke: '#c4b49a', strokeDasharray: '4 4' }}
           />
           <Legend />
           {series.map((s) => (
@@ -99,9 +159,17 @@ export function PriceChart({
               dataKey={s.key}
               name={s.name}
               stroke={s.color}
-              dot={false}
               strokeWidth={2}
               connectNulls
+              dot={(props) => (
+                <ChangeDot {...props} dataKey={s.key} color={s.color} data={data} />
+              )}
+              activeDot={{
+                r: 6,
+                fill: '#fffaf3',
+                stroke: s.color,
+                strokeWidth: 2,
+              }}
             />
           ))}
         </LineChart>

@@ -36,6 +36,7 @@ export default defineConfig({
   base: BASE,
   plugins: [react(), tailwindcss(), redirectBareBase()],
   server: {
+    port: 5123,
     proxy: {
       '/proxy/hkn': {
         target: 'https://hoakimnguyen.com',
