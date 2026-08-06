@@ -10,24 +10,30 @@ on:
     types: [completed]
     branches: [main]
 
-# Push static site lên branch `gh-pages` (không dùng actions/deploy-pages —
-# action đó hay kẹt deployment_queued / Timeout trên GitHub Pages).
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages
+  # false: tránh hủy deploy giữa chừng → deployment_queued treo đến timeout
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
+    # Bỏ qua nếu scrape fail; push / manual vẫn chạy bình thường
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
+          # Luôn tip main (scrape bot push xong mới workflow_run).
           ref: main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -44,11 +50,18 @@ jobs:
       - name: SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
 
-      - name: Publish to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          force_orphan: true
-          user_name: github-actions[bot]
-          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
