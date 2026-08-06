@@ -44,8 +44,8 @@ scripts/
   scrape.mjs                # crawl adaptive
   sources.json              # danh sách domain
 public/data/                # data chuẩn (crawl / pull)
-  latest/{hkn,kkvh}.json
-  history/{hkn,kkvh}/history.json
+  history/{hkn,kkvh,hn}/history.json   # lịch sử; điểm cuối = giá hiện tại
+  schedule.json
 public/data-test/           # fixtures local khi VITE_USE_TEST_DATA=true
 .github/workflows/          # deploy-pages + scrape-gold
 ```

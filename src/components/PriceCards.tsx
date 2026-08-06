@@ -1,6 +1,6 @@
 import type { ChartRange, CurrentRow, GoldKind, PricePoint } from '../types'
 import { previousPoint } from '../lib/history'
-import { formatVnd, sourceUpdatedAtToMs } from '../lib/normalize'
+import { formatVnd, pointTimeMs, sourceUpdatedAtToMs } from '../lib/normalize'
 import { SellDelta } from './SellDelta'
 
 type Props = {
@@ -75,7 +75,9 @@ export function PriceCards({
                   <p className="font-display m-0 text-[1.2rem] font-bold">
                     {formatVnd(low.sell)}
                   </p>
-                  <p className="text-muted m-0 text-[0.9rem]">{formatLowDate(low.ts)}</p>
+                  <p className="text-muted m-0 text-[0.9rem]">
+                    {formatLowDate(pointTimeMs(low))}
+                  </p>
                 </>
               ) : (
                 <p className="text-muted m-0 text-[0.9rem]">Chưa có dữ liệu</p>

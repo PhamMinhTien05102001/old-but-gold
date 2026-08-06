@@ -2,9 +2,11 @@
  * Adaptive scrape for HKN + KKVH + Hồng Ngọc gold 9999 prices.
  * - Heartbeat: GitHub Actions every 30m
  * - Interval X: default/max 120m, min 30m; half on change, double on stable
+ * - Every successful crawl appends history points (same price → flat chart segment)
+ * - Current prices = last point(s) in history/{store}/history.json (no latest/ files)
  * - Layout:
- *     public/data/latest/{hkn,kkvh,hn}.json
  *     public/data/history/{hkn,kkvh,hn}/history.json
+ *     public/data/schedule.json
  *
  * Usage:
  *   node scripts/scrape.mjs
@@ -260,32 +262,48 @@ function clampInterval(minutes, min, max) {
   return Math.min(max, Math.max(min, minutes))
 }
 
-function collectRows(latest) {
-  if (!latest) return []
-  const rows = []
-  for (const key of Object.keys(latest)) {
-    if (key === 'fetchedAt') continue
-    const snap = latest[key]
-    if (snap?.rows) rows.push(...snap.rows)
-  }
-  return rows
-}
-
-function rowMap(rows) {
+/** Last history point per kind (for adaptive X + crawl fallback). */
+function lastPointsByKind(history) {
   const map = new Map()
-  for (const row of rows) {
-    map.set(row.kind, row)
+  for (const p of history) {
+    if (!isTrackedKind(p.kind)) continue
+    map.set(p.kind, p)
   }
   return map
 }
 
-/** Returns kinds whose buy/sell differ from previous latest. */
-function changedKinds(prevLatest, nextSnapshots) {
-  const prev = rowMap(collectRows(prevLatest))
+function snapshotFromHistory(store, history) {
+  const points = history.filter((p) => p.store === store && isTrackedKind(p.kind))
+  if (!points.length) return null
+  const byKind = new Map()
+  for (const p of points) byKind.set(p.kind, p)
+  const rows = [...byKind.values()].map((p) => ({
+    kind: p.kind,
+    label: p.label,
+    buy: p.buy,
+    sell: p.sell,
+  }))
+  if (!rows.some((r) => Number(r.buy) > 0 && Number(r.sell) > 0)) return null
+  let fetchedAt = 0
+  let sourceUpdatedAt
+  for (const p of byKind.values()) {
+    fetchedAt = Math.max(fetchedAt, p.ts ?? 0)
+    if (p.sourceUpdatedAt) sourceUpdatedAt = p.sourceUpdatedAt
+  }
+  return {
+    store,
+    sourceUpdatedAt,
+    fetchedAt,
+    rows: rows.filter((r) => Number(r.buy) > 0 && Number(r.sell) > 0),
+  }
+}
+
+/** Returns kinds whose buy/sell differ from previous history tip (for adaptive X). */
+function changedKinds(prevByKind, nextSnapshots) {
   const changed = []
   for (const snap of nextSnapshots) {
     for (const row of snap.rows) {
-      const old = prev.get(row.kind)
+      const old = prevByKind.get(row.kind)
       if (!old || old.buy !== row.buy || old.sell !== row.sell) {
         changed.push({ snap, row })
       }
@@ -294,47 +312,35 @@ function changedKinds(prevLatest, nextSnapshots) {
   return changed
 }
 
-function appendChangedHistory(history, changed, now) {
-  const additions = changed.map(({ snap, row }) => ({
-    ts: now,
-    store: snap.store,
-    kind: row.kind,
-    label: row.label,
-    buy: row.buy,
-    sell: row.sell,
-    sourceUpdatedAt: snap.sourceUpdatedAt,
-  }))
-  return [...history, ...additions].slice(-20_000)
+/** One history point per row from a successful crawl (duplicates allowed → flat line). */
+function historyEntriesFromSnaps(snaps, now) {
+  const additions = []
+  for (const snap of snaps) {
+    for (const row of snap.rows) {
+      if (!isTrackedKind(row.kind)) continue
+      additions.push({
+        ts: now,
+        store: snap.store,
+        kind: row.kind,
+        label: row.label,
+        buy: row.buy,
+        sell: row.sell,
+        sourceUpdatedAt: snap.sourceUpdatedAt,
+      })
+    }
+  }
+  return additions
 }
 
-function latestPaths() {
-  return Object.fromEntries(
-    STORES.map((id) => [id, path.join(DATA_DIR, 'latest', `${id}.json`)]),
-  )
+function appendHistory(history, additions) {
+  if (!additions.length) return history
+  return [...history, ...additions].slice(-20_000)
 }
 
 function historyPaths() {
   return Object.fromEntries(
     STORES.map((id) => [id, path.join(DATA_DIR, 'history', id, 'history.json')]),
   )
-}
-
-/** Combined latest object (compat with changedKinds). Migrates old flat latest.json. */
-async function loadLatestCombined() {
-  const paths = latestPaths()
-  const snaps = {}
-  let any = false
-  let fetchedAt = 0
-  for (const id of STORES) {
-    const snap = await loadJson(paths[id], null)
-    if (snap) {
-      snaps[id] = snap
-      any = true
-      fetchedAt = Math.max(fetchedAt, snap.fetchedAt ?? 0)
-    }
-  }
-  if (any) return { fetchedAt, ...snaps }
-  return loadJson(path.join(DATA_DIR, 'latest.json'), null)
 }
 
 async function loadAllHistory() {
@@ -348,15 +354,6 @@ async function loadAllHistory() {
 
   const legacy = await loadJson(path.join(DATA_DIR, 'history.json'), [])
   return Array.isArray(legacy) ? legacy : []
-}
-
-async function writeLatestSplit(latest) {
-  await mkdir(path.join(DATA_DIR, 'latest'), { recursive: true })
-  const paths = latestPaths()
-  for (const store of STORES) {
-    if (!latest[store]) continue
-    await writeFile(paths[store], JSON.stringify(latest[store], null, 2) + '\n')
-  }
 }
 
 async function writeHistorySplit(history) {
@@ -414,7 +411,10 @@ async function main() {
   const { sources } = await loadJson(SOURCES_PATH, { sources: [] })
   if (!sources.length) throw new Error('No sources in scripts/sources.json')
 
-  const prevLatest = await loadLatestCombined()
+  const prevHistory = await loadAllHistory()
+  const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
+  const historyPruned = cleanedPrev.length !== prevHistory.length
+  const prevByKind = lastPointsByKind(cleanedPrev)
 
   const crawlResults = await Promise.all(
     sources.map(async (source) => {
@@ -429,23 +429,25 @@ async function main() {
     }),
   )
 
-  const snapshots = []
   const storeStatus = []
+  const freshSnaps = []
+  let anyUsable = false
   for (const result of crawlResults) {
     if (result.ok) {
-      snapshots.push(result.snap)
+      freshSnaps.push(result.snap)
       storeStatus.push({ store: result.id, rows: result.snap.rows.length, status: 'ok' })
+      anyUsable = true
       continue
     }
-    const prev = prevLatest?.[result.id]
+    const prev = snapshotFromHistory(result.id, cleanedPrev)
     if (hasValidRows(prev)) {
-      snapshots.push(prev)
       storeStatus.push({
         store: result.id,
         rows: prev.rows.length,
         status: 'fallback',
         error: result.error,
       })
+      anyUsable = true
     } else {
       storeStatus.push({
         store: result.id,
@@ -456,15 +458,13 @@ async function main() {
     }
   }
 
-  if (!snapshots.length) {
-    throw new Error('All stores failed and no previous valid data to fall back to')
+  if (!anyUsable) {
+    throw new Error('All stores failed and no previous history to fall back to')
   }
 
-  const freshSnaps = snapshots.filter((s) =>
-    storeStatus.some((x) => x.store === s.store && x.status === 'ok'),
-  )
-  const changedFresh = changedKinds(prevLatest, freshSnaps)
+  const changedFresh = changedKinds(prevByKind, freshSnaps)
   const priceChanged = changedFresh.length > 0
+  const historyAdditions = historyEntriesFromSnaps(freshSnaps, now)
 
   let interval = Number(schedule.intervalMinutes) || DEFAULT_INTERVAL
   if (priceChanged) {
@@ -481,17 +481,7 @@ async function main() {
     )
   }
 
-  const latest = { fetchedAt: now }
-  for (const snap of snapshots) {
-    latest[snap.store] = snap
-  }
-
-  const prevHistory = await loadAllHistory()
-  const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
-  const historyPruned = cleanedPrev.length !== prevHistory.length
-  const history = priceChanged
-    ? appendChangedHistory(cleanedPrev, changedFresh, now)
-    : cleanedPrev
+  const history = appendHistory(cleanedPrev, historyAdditions)
 
   const nextCrawlAtMs = now + interval * 60_000
   const nextSchedule = {
@@ -505,9 +495,8 @@ async function main() {
     storeStatus,
   }
 
-  await writeLatestSplit(latest)
   await writeFile(schedulePath, JSON.stringify(nextSchedule, null, 2) + '\n')
-  if (priceChanged || historyPruned) {
+  if (historyAdditions.length || historyPruned) {
     await writeHistorySplit(history)
   }
 
@@ -519,7 +508,7 @@ async function main() {
         changedKinds: nextSchedule.lastChangedKinds,
         intervalMinutes: interval,
         nextCrawlAt: nextSchedule.nextCrawlAt,
-        historyAppended: priceChanged ? changedFresh.length : 0,
+        historyAppended: historyAdditions.length,
         stores: storeStatus,
       },
       null,

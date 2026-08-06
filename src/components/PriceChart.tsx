@@ -85,7 +85,7 @@ function previousSeriesValue(
   return undefined
 }
 
-/** Dot only at first sample and whenever this series' price changes. */
+/** Dot at first/last sample and whenever this series' price changes. */
 function ChangeDot({
   cx,
   cy,
@@ -105,8 +105,11 @@ function ChangeDot({
   const value = Number(data[index]?.[dataKey])
   if (!Number.isFinite(value)) return null
 
+  const isFirst = index === 0
+  const isLast = index === data.length - 1
   const prev = previousSeriesValue(data, dataKey, index)
-  if (prev !== undefined && prev === value) return null
+  const priceChanged = prev === undefined || prev !== value
+  if (!isFirst && !isLast && !priceChanged) return null
 
   return <circle cx={cx} cy={cy} r={4} fill="#fffaf3" stroke={color} strokeWidth={2} />
 }

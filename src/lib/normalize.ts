@@ -96,6 +96,14 @@ export function sourceUpdatedAtToMs(raw?: string | null): number | null {
   return Number.isNaN(ms) ? null : ms
 }
 
+/** Shop update time when available; otherwise scrape/crawl `ts`. */
+export function pointTimeMs(p: {
+  ts: number
+  sourceUpdatedAt?: string | null
+}): number {
+  return sourceUpdatedAtToMs(p.sourceUpdatedAt) ?? p.ts
+}
+
 export function normalizeLabel(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/đ/gi, 'd').trim().toLowerCase()
 }

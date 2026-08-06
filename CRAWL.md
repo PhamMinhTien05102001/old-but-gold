@@ -11,12 +11,13 @@ Production đọc JSON đã crawl sẵn trong `public/data/`. Local (`npm run de
 
 | File | Vai trò |
 |------|---------|
-| [`scripts/sources.json`](scripts/sources.json) | Danh sách domain + parser (`hkn`, `kkvh`) |
+| [`scripts/sources.json`](scripts/sources.json) | Danh sách domain + parser (`hkn`, `kkvh`, `hn`) |
 | [`scripts/scrape.mjs`](scripts/scrape.mjs) | Orchestrator crawl + adaptive X |
-| [`public/data/latest/{hkn,kkvh}.json`](public/data/latest) | Snapshot giá mới nhất theo tiệm |
-| [`public/data/history/{hkn,kkvh}/history.json`](public/data/history) | Lịch sử — **chỉ append khi giá đổi** |
-| [`public/data/schedule.json`](public/data/schedule.json) | State khoảng X và lịch crawl tiếp theo |
+| [`public/data/history/{hkn,kkvh,hn}/history.json`](public/data/history) | Lịch sử + **giá hiện tại = điểm cuối**; append mỗi crawl OK |
+| [`public/data/schedule.json`](public/data/schedule.json) | State khoảng X, lịch crawl, `storeStatus` |
 | [`.github/workflows/scrape-gold.yml`](.github/workflows/scrape-gold.yml) | Heartbeat Actions + commit data |
+
+Không còn file `latest/` — tránh lệch giữa snapshot và history.
 
 ## Luồng tổng quan
 
@@ -25,10 +26,11 @@ GitHub Action (mỗi 30 phút)
   → node scripts/scrape.mjs
   → nếu chưa tới nextCrawlAt → skip (exit 0)
   → nếu tới hạn (hoặc --force) → crawl mọi source trong sources.json
-  → so sánh buy/sell với latest/{store}.json
-  → giá đổi: append history/{store}/history.json + X = max(30, X/2)
-  → giá không đổi: không append history + X = min(120, X*2)
-  → ghi latest/{store}.json + schedule.json
+  → append mọi row crawl OK vào history/{store}/history.json
+  → so sánh buy/sell với điểm cuối history (chỉ để chỉnh X):
+      giá đổi → X = max(30, X/2)
+      giá không đổi → X = min(120, X*2)
+  → ghi schedule.json (+ history nếu có append)
   → commit/push nếu file đổi
 ```
 
@@ -64,16 +66,20 @@ Sau mỗi lần crawl thành công:
 
 `nextCrawlAt: null` (hoặc file mới) → lần chạy đầu crawl ngay.
 
-## So sánh “đổi giá”
+## History & so sánh “đổi giá”
 
-Với mỗi `kind` (vd. `hkn_nhan_9999`, `kkvh_9999`):
+Mỗi lần crawl **thành công** (status `ok`), mọi `kind` tracked được **append** vào `history/{store}/history.json` — kể cả khi `buy`/`sell` trùng lần trước (chart sẽ nằm ngang giữa hai mốc `sourceUpdatedAt`).
 
-- Lấy `buy` / `sell` từ crawl mới
-- So với cùng `kind` trong `latest/{store}.json`
-- Khác → kind đó được append vào `history/{store}/history.json`
-- Không có kind nào đổi → **không ghi** history
+App (prod / test fixtures) lấy giá hiện tại từ **điểm cuối history** theo store/kind.
 
-`latest/{store}.json` và `schedule.json` vẫn được cập nhật sau mọi lần crawl (kể cả giá không đổi) để biết lần check gần nhất và X mới.
+So sánh với điểm cuối history chỉ dùng để **chỉnh interval X** (và ghi `lastChangedKinds`):
+
+- Khác buy/sell → `lastResult: changed`, rút ngắn X
+- Không kind nào đổi → `lastResult: unchanged`, nới X
+
+Crawl fail → không append; `storeStatus: fallback` nếu còn history cũ.
+
+`schedule.json` được cập nhật sau mọi lần crawl tới hạn.
 
 ## Nguồn & parse
 
@@ -81,6 +87,7 @@ Cấu hình trong `sources.json`. Hiện có:
 
 - **hkn** — bảng HTML Hoa Kim Nguyên, dòng chứa `9999`; giá nhỏ (&lt; 100000) ×1000 → VND/chỉ
 - **kkvh** — bảng Kim Khánh Việt Hùng, dòng `Vàng 999.9`
+- **hn** — Hồng Ngọc / Mão Thiệt
 
 Thêm domain: thêm entry vào `sources.json` + hàm parser tương ứng trong `scrape.mjs`.
 

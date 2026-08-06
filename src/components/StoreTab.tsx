@@ -1,7 +1,11 @@
 import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
-import { filterHistory, previousPoint } from '../lib/history'
-import { formatTimeAgo, normalizeSourceUpdatedAt } from '../lib/normalize'
+import { filterHistory, latestPoint, previousPoint } from '../lib/history'
+import {
+  formatTimeAgo,
+  normalizeSourceUpdatedAt,
+  pointTimeMs,
+} from '../lib/normalize'
 import { isStoreUnhealthy, type StoreHealth } from '../lib/stores'
 import { PriceChart } from './PriceChart'
 import { PriceCards } from './PriceCards'
@@ -34,19 +38,21 @@ const KIND_SERIES: Record<string, { sellKey: string; sellColor: string }> = {
   },
 }
 
+/** One chart point per history record (x = shop sourceUpdatedAt). */
 function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
-  const byTs = new Map<number, Record<string, number | string>>()
+  const out: Record<string, number | string>[] = []
 
   for (const p of points) {
     if (!kinds.includes(p.kind)) continue
     const meta = KIND_SERIES[p.kind]
     if (!meta) continue
-    const row = byTs.get(p.ts) ?? { ts: p.ts }
-    row[meta.sellKey] = p.sell
-    byTs.set(p.ts, row)
+    out.push({
+      ts: pointTimeMs(p),
+      [meta.sellKey]: p.sell,
+    })
   }
 
-  return Array.from(byTs.values()).sort((a, b) => Number(a.ts) - Number(b.ts))
+  return out.sort((a, b) => Number(a.ts) - Number(b.ts))
 }
 
 export function StoreTab({
@@ -86,12 +92,16 @@ export function StoreTab({
 
   const showStaleBanner = isStoreUnhealthy(health)
   const primaryRow = rows[0]
+  // Chart + label follow history tip (JSON). DEV proxy may be newer — don't show that as "Nguồn cập nhật".
+  const historyTip = primaryRow ? latestPoint(history, primaryRow.kind) : undefined
+  const displaySourceUpdatedAt =
+    historyTip?.sourceUpdatedAt ?? sourceUpdatedAt
   const prevPoint = primaryRow
     ? previousPoint(history, primaryRow.kind, primaryRow)
     : undefined
-  const prevAge = prevPoint ? formatTimeAgo(prevPoint.ts) : null
-  const sourceUpdatedLabel = sourceUpdatedAt
-    ? normalizeSourceUpdatedAt(sourceUpdatedAt)
+  const prevAge = prevPoint ? formatTimeAgo(pointTimeMs(prevPoint)) : null
+  const sourceUpdatedLabel = displaySourceUpdatedAt
+    ? normalizeSourceUpdatedAt(displaySourceUpdatedAt)
     : undefined
 
   return (
@@ -139,7 +149,7 @@ export function StoreTab({
             history={history}
             rangeHistory={storeHistory}
             range={range}
-            sourceUpdatedAt={sourceUpdatedAt}
+            sourceUpdatedAt={displaySourceUpdatedAt}
           />
           <PriceTable rows={rows} />
 

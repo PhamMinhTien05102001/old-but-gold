@@ -1,4 +1,5 @@
 import type { ChartRange, PricePoint } from '../types'
+import { pointTimeMs } from './normalize'
 
 const MS: Record<Exclude<ChartRange, 'All'>, number> = {
   '1D': 24 * 60 * 60 * 1000,
@@ -7,13 +8,10 @@ const MS: Record<Exclude<ChartRange, 'All'>, number> = {
   '3M': 90 * 24 * 60 * 60 * 1000,
 }
 
-export function filterByRange<T extends { ts: number }>(
-  points: T[],
-  range: ChartRange,
-): T[] {
+export function filterByRange(points: PricePoint[], range: ChartRange): PricePoint[] {
   if (range === 'All') return points
   const cutoff = Date.now() - MS[range]
-  return points.filter((p) => p.ts >= cutoff)
+  return points.filter((p) => pointTimeMs(p) >= cutoff)
 }
 
 export function filterHistory(

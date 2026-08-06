@@ -50,8 +50,9 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     setError(null)
     try {
-      const [{ hkn: h, kkvh: k, hn: n, storeStatus: status }, remote] =
-        await Promise.all([fetchAllSnapshots(), fetchRemoteHistory()])
+      const remote = await fetchRemoteHistory()
+      const { hkn: h, kkvh: k, hn: n, storeStatus: status } =
+        await fetchAllSnapshots(remote)
       setHkn(h)
       setKkvh(k)
       setHn(n)
