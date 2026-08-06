@@ -17,19 +17,17 @@ permissions:
 
 concurrency:
   group: pages
-  # false: tránh hủy deploy giữa chừng → deployment_queued treo đến timeout
+  # false: tránh hủy deploy giữa chừng (dễ thành "Deployment cancelled" / queue treo)
   cancel-in-progress: false
 
 jobs:
   build:
-    # Bỏ qua nếu scrape fail; push / manual vẫn chạy bình thường
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          # Luôn tip main (scrape bot push xong mới workflow_run).
           ref: main
 
       - name: Setup Pages
@@ -60,8 +58,13 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ fromJSON(steps.deployment.outputs.outputs).page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        # Pages hay lỗi tạm: deployment_queued timeout / Deployment cancelled / try again later.
+        uses: Wandalen/wretry.action@v3.8.0
+        with:
+          action: actions/deploy-pages@v4
+          attempt_limit: 4
+          attempt_delay: 45000
