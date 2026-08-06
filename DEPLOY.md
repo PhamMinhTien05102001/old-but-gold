@@ -41,8 +41,9 @@ Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
 
 ### 2. `.github/workflows/deploy-pages.yml`
 
-- Trigger: push `main` + `workflow_dispatch`
-- `npm ci` → `npm run build` → upload `dist` → `actions/deploy-pages`
+- Trigger: push `main` + `workflow_dispatch` + `workflow_run` sau scrape
+- `configure-pages` → build → `upload-pages-artifact` → `deploy-pages`
+- `concurrency.cancel-in-progress: false` để tránh deploy bị hủy giữa chừng rồi kẹt `deployment_queued`
 
 ### 3. `.github/workflows/scrape-gold.yml`
 

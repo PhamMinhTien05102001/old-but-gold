@@ -17,7 +17,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # false: tránh hủy deploy giữa chừng → deployment_queued treo đến timeout
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -26,14 +27,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          # workflow_run.head_sha = commit scrape BẮT ĐẦU (trước khi bot push data).
-          # Luôn lấy tip `main` để Pages nhận JSON scrape mới nhất.
+          # Luôn tip main (scrape bot push xong mới workflow_run).
           ref: main
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -48,7 +51,7 @@ jobs:
         run: cp dist/index.html dist/404.html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
