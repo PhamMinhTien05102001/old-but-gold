@@ -55,4 +55,5 @@ public/data-test/           # fixtures local khi VITE_USE_TEST_DATA=true
 ## Tài liệu khác
 
 - [CRAWL.md](./CRAWL.md) — logic crawl / adaptive interval / data files
+- [CHART.md](./CHART.md) — logic lọc / gộp / vẽ dữ liệu lên biểu đồ
 - [DEPLOY.md](./DEPLOY.md) — deploy GitHub Pages

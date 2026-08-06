@@ -38,8 +38,8 @@ const KIND_SERIES: Record<string, { sellKey: string; sellColor: string }> = {
   },
 }
 
-/** One chart point per history record (x = shop sourceUpdatedAt). */
-function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
+/** One chart row per history record (x = shop sourceUpdatedAt). */
+function buildChartRows(points: PricePoint[], kinds: CurrentRow['kind'][]) {
   const out: Record<string, number | string>[] = []
 
   for (const p of points) {
@@ -53,6 +53,45 @@ function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
   }
 
   return out.sort((a, b) => Number(a.ts) - Number(b.ts))
+}
+
+/**
+ * Keep first + last of each constant-price run so 1h-apart same-price
+ * scrapes don't stack on top of each other on a multi-day x-axis.
+ */
+function collapseSamePricePlateaus(
+  rows: Record<string, number | string>[],
+  sellKey: string,
+): Record<string, number | string>[] {
+  if (rows.length <= 2) return rows
+  const out: Record<string, number | string>[] = []
+  for (let i = 0; i < rows.length; i++) {
+    const curr = rows[i]
+    const v = Number(curr[sellKey])
+    if (!Number.isFinite(v)) {
+      out.push(curr)
+      continue
+    }
+    const prev = out[out.length - 1]
+    const next = rows[i + 1]
+    if (
+      prev &&
+      next &&
+      Number(prev[sellKey]) === v &&
+      Number(next[sellKey]) === v
+    ) {
+      continue
+    }
+    out.push(curr)
+  }
+  return out
+}
+
+function buildChartData(points: PricePoint[], kinds: CurrentRow['kind'][]) {
+  const rows = buildChartRows(points, kinds)
+  const sellKey = kinds.map((k) => KIND_SERIES[k]?.sellKey).find(Boolean)
+  if (!sellKey) return rows
+  return collapseSamePricePlateaus(rows, sellKey)
 }
 
 export function StoreTab({
