@@ -1,90 +1,76 @@
-# Deploy GitHub Pages — ghi chú các bước đã làm
+# Deploy GitHub Pages
 
-Repo: https://github.com/PhamMinhTien05102001/old-but-got  
-Site (sau khi Action xanh): https://phamminhtien05102001.github.io/old-but-got/
+Repo: https://github.com/PhamMinhTien05102001/old-but-gold  
+Site: https://phamminhtien05102001.github.io/old-but-gold/
 
 ## Vì sao không chỉ “bật Pages” là xong?
 
-GitHub Pages chỉ host file tĩnh. Vite proxy (`/proxy/hkn`, `/proxy/kkvh`) **không chạy** trên Pages → browser bị CORS nếu gọi thẳng 2 tiệm.
+GitHub Pages chỉ host file tĩnh. Vite proxy (`/proxy/hkn`, …) **không chạy** trên Pages → browser bị CORS nếu gọi thẳng site tiệm.
 
-Giải pháp đã làm:
+Giải pháp:
 
-1. **Deploy** UI bằng GitHub Actions → Pages
-2. **Scrape thích ứng**: heartbeat; mỗi crawl thành công append `history/{store}/history.json` (kể cả giá không đổi). Bot commit bằng `GITHUB_TOKEN` **không** kích hoạt `on.push` của Deploy — Deploy lắng nghe thêm `workflow_run` sau khi scrape xong.
-3. App trên Pages đọc JSON đó; local (`npm run dev`) vẫn dùng proxy
+1. **Build** UI bằng GitHub Actions, publish folder `dist` lên branch **`gh-pages`**
+2. **Scrape** định kỳ ghi `public/data/history/…` trên `main`; sau scrape, Deploy chạy lại (qua `workflow_run`)
+3. Local (`npm run dev`) vẫn dùng proxy live
 
----
-
-## Bước đã làm trên GitHub (Settings → Pages)
-
-Trang: https://github.com/PhamMinhTien05102001/old-but-got/settings/pages
-
-| Mục                   | Giá trị                                  |
-| --------------------- | ---------------------------------------- |
-| **Source**            | **GitHub Actions** (đã chọn sẵn trên UI) |
-| Branch deploy classic | Không dùng                               |
-| Custom domain         | Để trống                                 |
-| HTTPS                 | Bắt buộc / đã bật với `*.github.io`      |
-
-Pages báo _disabled_ cho đến khi workflow **Deploy GitHub Pages** chạy thành công lần đầu.
-
-Không cần đổi thêm dropdown Source nếu đã là “GitHub Actions”.
+> **Lưu ý (2026-08):** `actions/deploy-pages` (OIDC / artifact) hay kẹt `deployment_queued` rồi `Timeout reached, aborting!` — lỗi phía GitHub Pages queue, không phải build app. Workflow hiện **không dùng** action đó nữa.
 
 ---
 
-## Thay đổi trong code (đã thêm vào repo)
+## Bắt buộc: Settings → Pages
 
-### 1. `vite.config.ts`
+Trang: https://github.com/PhamMinhTien05102001/old-but-gold/settings/pages
 
-- `base: '/old-but-gold/'` — bắt buộc vì project site nằm dưới path repo name
-- Giữ proxy cho `npm run dev` / `preview`
+| Mục | Giá trị |
+|-----|---------|
+| **Source** | **Deploy from a branch** |
+| **Branch** | `gh-pages` / `/ (root)` |
+| Custom domain | Để trống |
+| HTTPS | Bật |
 
-### 2. `.github/workflows/deploy-pages.yml`
+Sau lần Deploy đầu tiên thành công, branch `gh-pages` sẽ xuất hiện (do `peaceiris/actions-gh-pages` tạo). Nếu chưa có branch: chạy **Actions → Deploy GitHub Pages → Run workflow**, rồi mới chọn branch trong Settings.
 
-- Trigger: push `main` + `workflow_dispatch` + `workflow_run` sau scrape
-- `configure-pages` → build → `upload-pages-artifact` → `deploy-pages`
-- `concurrency.cancel-in-progress: false` để tránh deploy bị hủy giữa chừng rồi kẹt `deployment_queued`
+### Quyền Actions
 
-### 3. `.github/workflows/scrape-gold.yml`
-
-- Cron heartbeat 30 phút; manual dùng `--force`
-- Chi tiết logic: [CRAWL.md](./CRAWL.md)
-
-### 4. Adaptive scrape
-
-Xem [CRAWL.md](./CRAWL.md) (`sources.json`, `scrape.mjs`, `schedule.json`, quy tắc X).
-
-### 5. App runtime
-
-- **DEV**: fetch qua Vite proxy (fallback = đuôi history)
-- **Production (Pages)**: giá hiện tại + chart từ `BASE_URL/data/history/{store}/history.json`
-- `schedule.json` cho `storeStatus` / lịch scrape
-
-### 6. Seed data lần đầu
-
-- `npm run scrape:force` → tạo/cập nhật data trong `public/data/`
+**Settings → Actions → General → Workflow permissions** → **Read and write permissions** → Save  
+(cần để scrape push `main` và deploy push `gh-pages`)
 
 ---
 
-## Việc bạn cần làm sau khi push
+## Workflow
 
-1. Vào **Actions** → đợi workflow **Deploy GitHub Pages** thành công (màu xanh).
-2. (Tuỳ chọn) **Actions → Scrape gold prices → Run workflow** để crawl ngay (`--force`).
-3. Mở: https://phamminhtien05102001.github.io/old-but-got/
-4. Nếu 404: đợi 1–2 phút, hard refresh; kiểm tra `base` trùng tên repo (`old-but-gold`).
+### [`deploy-pages.yml`](.github/workflows/deploy-pages.yml)
 
-### Quyền Actions (nếu scrape không push được)
+- Trigger: `push` `main` | `workflow_dispatch` | `workflow_run` sau scrape success
+- `npm ci` → `npm run build` → copy `404.html` → publish `dist/` lên `gh-pages`
 
-**Settings → Actions → General → Workflow permissions** → chọn **Read and write permissions** → Save.
+### [`scrape-gold.yml`](.github/workflows/scrape-gold.yml)
+
+- Cron ~30 phút; manual `--force`
+- Chi tiết: [CRAWL.md](./CRAWL.md)
+
+### App
+
+- `vite` `base: '/old-but-gold/'`
+- Prod đọc `history/{store}/history.json` (+ `schedule.json`)
+- DEV: proxy live
 
 ---
 
-## Local sau này
+## Sau khi push
+
+1. **Cancel** mọi run Deploy đang treo/`deployment_queued` (nếu còn).
+2. Push workflow mới → đợi **Deploy GitHub Pages** xanh.
+3. Settings → Pages → Source = **branch `gh-pages`**.
+4. Mở https://phamminhtien05102001.github.io/old-but-gold/ (đợi 1–2 phút, hard refresh nếu cần).
+
+---
+
+## Local
 
 ```bash
 npm install
-npm run scrape         # tôn trọng lịch X (có thể skip)
-npm run scrape:force   # luôn crawl + cập nhật X
-npm run dev            # proxy live từ 2 tiệm
-npm run build          # build với base /old-but-gold/
+npm run scrape:force   # crawl ngay
+npm run dev            # proxy live
+npm run build          # base /old-but-gold/
 ```

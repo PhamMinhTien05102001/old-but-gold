@@ -10,18 +10,17 @@ on:
     types: [completed]
     branches: [main]
 
+# Push static site lên branch `gh-pages` (không dùng actions/deploy-pages —
+# action đó hay kẹt deployment_queued / Timeout trên GitHub Pages).
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
-  # false: tránh hủy deploy giữa chừng (dễ thành "Deployment cancelled" / queue treo)
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
@@ -29,9 +28,6 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: main
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -48,23 +44,11 @@ jobs:
       - name: SPA fallback for GitHub Pages
         run: cp dist/index.html dist/404.html
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ fromJSON(steps.deployment.outputs.outputs).page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        # Pages hay lỗi tạm: deployment_queued timeout / Deployment cancelled / try again later.
-        uses: Wandalen/wretry.action@v3.8.0
-        with:
-          action: actions/deploy-pages@v4
-          attempt_limit: 4
-          attempt_delay: 45000
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
