@@ -1,0 +1,26 @@
+{
+  "intervalMinutes": 60,
+  "minIntervalMinutes": 30,
+  "maxIntervalMinutes": 120,
+  "lastCrawlAt": "2026-08-06T14:17:53.750Z",
+  "nextCrawlAt": "2026-08-06T15:17:53.750Z",
+  "lastResult": "unchanged",
+  "lastChangedKinds": [],
+  "storeStatus": [
+    {
+      "store": "hkn",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "store": "kkvh",
+      "rows": 1,
+      "status": "ok"
+    },
+    {
+      "store": "hn",
+      "rows": 1,
+      "status": "ok"
+    }
+  ]
+}

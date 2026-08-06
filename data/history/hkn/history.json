@@ -1,0 +1,128 @@
+[
+  {
+    "ts": 1785548119247,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 12900000,
+    "sell": 13060000,
+    "sourceUpdatedAt": "17:24:21 31/07/2026"
+  },
+  {
+    "ts": 1785554552317,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 12900000,
+    "sell": 13060000,
+    "sourceUpdatedAt": "17:24:21 31/07/2026"
+  },
+  {
+    "ts": 1785660983483,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 12920000,
+    "sell": 13080000,
+    "sourceUpdatedAt": "15:10:41 02/08/2026"
+  },
+  {
+    "ts": 1785757035558,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 12900000,
+    "sell": 13060000,
+    "sourceUpdatedAt": "18:27:03 03/08/2026"
+  },
+  {
+    "ts": 1785903395098,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 12980000,
+    "sell": 13140000,
+    "sourceUpdatedAt": "09:53:33 05/08/2026"
+  },
+  {
+    "ts": 1785914195921,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13020000,
+    "sell": 13160000,
+    "sourceUpdatedAt": "13:53:53 05/08/2026"
+  },
+  {
+    "ts": 1785924559357,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13060000,
+    "sell": 13220000,
+    "sourceUpdatedAt": "15:04:39 05/08/2026"
+  },
+  {
+    "ts": 1785932663989,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13040000,
+    "sell": 13200000,
+    "sourceUpdatedAt": "18:53:53 05/08/2026"
+  },
+  {
+    "ts": 1785941802154,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13080000,
+    "sell": 13240000,
+    "sourceUpdatedAt": "20:06:03 05/08/2026"
+  },
+  {
+    "ts": 1785989835723,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13200000,
+    "sell": 13400000,
+    "sourceUpdatedAt": "11:08:53 06/08/2026"
+  },
+  {
+    "ts": 1786000669419,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13180000,
+    "sell": 13360000,
+    "sourceUpdatedAt": "11:42:38 06/08/2026"
+  },
+  {
+    "ts": 1786011058407,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13160000,
+    "sell": 13340000,
+    "sourceUpdatedAt": "17:06:09 06/08/2026"
+  },
+  {
+    "ts": 1786022612534,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13160000,
+    "sell": 13340000,
+    "sourceUpdatedAt": "17:06:09 06/08/2026"
+  },
+  {
+    "ts": 1786025873750,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13160000,
+    "sell": 13340000,
+    "sourceUpdatedAt": "17:06:09 06/08/2026"
+  }
+]

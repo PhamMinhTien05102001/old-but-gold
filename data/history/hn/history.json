@@ -1,0 +1,119 @@
+[
+  {
+    "ts": 1785651567818,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12700000,
+    "sell": 13100000,
+    "sourceUpdatedAt": "12:35:06 02/08/2026"
+  },
+  {
+    "ts": 1785730066907,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12790000,
+    "sell": 13140000,
+    "sourceUpdatedAt": "10:35:06 03/08/2026"
+  },
+  {
+    "ts": 1785757035558,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12700000,
+    "sell": 13050000,
+    "sourceUpdatedAt": "17:35:07 03/08/2026"
+  },
+  {
+    "ts": 1785813175433,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12750000,
+    "sell": 13100000,
+    "sourceUpdatedAt": "09:35:08 04/08/2026"
+  },
+  {
+    "ts": 1785843613547,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12700000,
+    "sell": 13050000,
+    "sourceUpdatedAt": "17:35:05 04/08/2026"
+  },
+  {
+    "ts": 1785903395098,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12850000,
+    "sell": 13200000,
+    "sourceUpdatedAt": "10:35:08 05/08/2026"
+  },
+  {
+    "ts": 1785914195921,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12900000,
+    "sell": 13250000,
+    "sourceUpdatedAt": "13:35:06 05/08/2026"
+  },
+  {
+    "ts": 1785932663989,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 12850000,
+    "sell": 13200000,
+    "sourceUpdatedAt": "18:35:06 05/08/2026"
+  },
+  {
+    "ts": 1785977555536,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13060000,
+    "sell": 13460000,
+    "sourceUpdatedAt": "07:35:05 06/08/2026"
+  },
+  {
+    "ts": 1785989835723,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13050000,
+    "sell": 13450000,
+    "sourceUpdatedAt": "10:35:06 06/08/2026"
+  },
+  {
+    "ts": 1786019237047,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13050000,
+    "sell": 13450000,
+    "sourceUpdatedAt": "18:35:06 06/08/2026"
+  },
+  {
+    "ts": 1786022612534,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13050000,
+    "sell": 13450000,
+    "sourceUpdatedAt": "19:35:06 06/08/2026"
+  },
+  {
+    "ts": 1786025873750,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13050000,
+    "sell": 13450000,
+    "sourceUpdatedAt": "20:35:07 06/08/2026"
+  }
+]

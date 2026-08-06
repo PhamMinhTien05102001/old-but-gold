@@ -1,0 +1,173 @@
+[
+  {
+    "ts": 1785548119247,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13030000,
+    "sell": 13250000,
+    "sourceUpdatedAt": "07:21:48 01/08/2026"
+  },
+  {
+    "ts": 1785554552317,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13070000,
+    "sell": 13290000,
+    "sourceUpdatedAt": "09:52:55 01/08/2026"
+  },
+  {
+    "ts": 1785593267953,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13070000,
+    "sell": 13270000,
+    "sourceUpdatedAt": "19:12:18 01/08/2026"
+  },
+  {
+    "ts": 1785651567818,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13100000,
+    "sell": 13300000,
+    "sourceUpdatedAt": "11:19:36 02/08/2026"
+  },
+  {
+    "ts": 1785730066907,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13130000,
+    "sell": 13330000,
+    "sourceUpdatedAt": "10:06:06 03/08/2026"
+  },
+  {
+    "ts": 1785757035558,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13090000,
+    "sell": 13290000,
+    "sourceUpdatedAt": "18:03:10 03/08/2026"
+  },
+  {
+    "ts": 1785768638850,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13060000,
+    "sell": 13260000,
+    "sourceUpdatedAt": "20:10:27 03/08/2026"
+  },
+  {
+    "ts": 1785813175433,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13090000,
+    "sell": 13290000,
+    "sourceUpdatedAt": "07:24:17 04/08/2026"
+  },
+  {
+    "ts": 1785843613547,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13060000,
+    "sell": 13260000,
+    "sourceUpdatedAt": "16:23:57 04/08/2026"
+  },
+  {
+    "ts": 1785853678912,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13130000,
+    "sell": 13330000,
+    "sourceUpdatedAt": "20:35:40 04/08/2026"
+  },
+  {
+    "ts": 1785903395098,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13220000,
+    "sell": 13420000,
+    "sourceUpdatedAt": "10:56:26 05/08/2026"
+  },
+  {
+    "ts": 1785914195921,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13290000,
+    "sell": 13490000,
+    "sourceUpdatedAt": "13:01:39 05/08/2026"
+  },
+  {
+    "ts": 1785924559357,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13260000,
+    "sell": 13460000,
+    "sourceUpdatedAt": "16:50:39 05/08/2026"
+  },
+  {
+    "ts": 1785941802154,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13300000,
+    "sell": 13500000,
+    "sourceUpdatedAt": "20:45:03 05/08/2026"
+  },
+  {
+    "ts": 1785977555536,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13500000,
+    "sell": 13700000,
+    "sourceUpdatedAt": "07:21:42 06/08/2026"
+  },
+  {
+    "ts": 1785989835723,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13460000,
+    "sell": 13660000,
+    "sourceUpdatedAt": "10:47:53 06/08/2026"
+  },
+  {
+    "ts": 1786000669419,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13440000,
+    "sell": 13640000,
+    "sourceUpdatedAt": "14:07:54 06/08/2026"
+  },
+  {
+    "ts": 1786022612534,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13360000,
+    "sell": 13560000,
+    "sourceUpdatedAt": "20:16:41 06/08/2026"
+  },
+  {
+    "ts": 1786025873750,
+    "store": "kkvh",
+    "kind": "kkvh_9999",
+    "label": "Vàng 999.9",
+    "buy": 13360000,
+    "sell": 13560000,
+    "sourceUpdatedAt": "20:16:41 06/08/2026"
+  }
+]
