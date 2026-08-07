@@ -73,47 +73,6 @@ function formatYTick(v: number, yMin: number, yMax: number): string {
   return `${Math.round(tr)}tr`
 }
 
-function previousSeriesValue(
-  data: Record<string, string | number>[],
-  dataKey: string,
-  index: number,
-): number | undefined {
-  for (let i = index - 1; i >= 0; i--) {
-    const v = Number(data[i]?.[dataKey])
-    if (Number.isFinite(v)) return v
-  }
-  return undefined
-}
-
-/** Dot at first/last sample and whenever this series' price changes. */
-function ChangeDot({
-  cx,
-  cy,
-  index,
-  dataKey,
-  color,
-  data,
-}: {
-  cx?: number
-  cy?: number
-  index?: number
-  dataKey: string
-  color: string
-  data: Record<string, string | number>[]
-}) {
-  if (cx == null || cy == null || index == null) return null
-  const value = Number(data[index]?.[dataKey])
-  if (!Number.isFinite(value)) return null
-
-  const isFirst = index === 0
-  const isLast = index === data.length - 1
-  const prev = previousSeriesValue(data, dataKey, index)
-  const priceChanged = prev === undefined || prev !== value
-  if (!isFirst && !isLast && !priceChanged) return null
-
-  return <circle cx={cx} cy={cy} r={4} fill="#fffaf3" stroke={color} strokeWidth={2} />
-}
-
 export function PriceChart({
   data,
   series,
@@ -158,15 +117,15 @@ export function PriceChart({
           {series.map((s) => (
             <Line
               key={s.key}
-              type="monotone"
+              type="linear"
               dataKey={s.key}
               name={s.name}
               stroke={s.color}
               strokeWidth={2}
               connectNulls
-              dot={(props) => (
-                <ChangeDot {...props} dataKey={s.key} color={s.color} data={data} />
-              )}
+              // Line-only like Kitco / TradingView default — no fixed markers
+              // (close vertices after collapse look cluttered on 30D). Detail via hover.
+              dot={false}
               activeDot={{
                 r: 6,
                 fill: '#fffaf3',

@@ -33,8 +33,7 @@ history (tất cả store)
   → buildChartRows          // 1 row / 1 record history
   → collapseSamePricePlateaus
   → PriceChart (Recharts)
-       · Line connectNulls
-       · ChangeDot (chấm)
+       · Line type=linear, connectNulls, dot=false
        · Tooltip / activeDot khi hover
 ```
 
@@ -67,34 +66,38 @@ Không merge live/proxy vào chart — chỉ data trong history file.
 
 ## Bước 3 — Gộp plateau cùng giá
 
-`collapseSamePricePlateaus` — tránh chồng chấm khi nhiều scrape cùng `sell` sát giờ trên trục dài (30D):
+`collapseSamePricePlateaus` — rút gọn **đỉnh đường** (không liên quan chấm marker):
 
 - Duyệt theo thời gian
 - **Bỏ** điểm giữa nếu `sell == điểm trước` **và** `sell == điểm sau`
-- **Giữ** đầu + cuối mỗi đoạn giá không đổi
+- **Giữ** đầu + cuối mỗi đoạn giá không đổi → đoạn ngang đúng khoảng thời gian trên trục X
 
 | Input (sell theo thời gian) | Output chart |
 |-----------------------------|--------------|
-| 100 → 100 → 100 | giữ đầu + cuối (2 điểm, đoạn ngang) |
-| 100 → 100 → 105 | giữ cả 3? → bỏ giữa cùng giá: đầu(100), cuối plateau(100), rồi 105 → **2 điểm 100 + 1 điểm 105** |
+| 100 → 100 → 100 | giữ đầu + cuối (2 đỉnh, đoạn ngang) |
+| 100 → 100 → 105 | đầu(100), cuối plateau(100), rồi 105 |
 | 100 → 105 (cách 30 phút) | **giữ cả 2** (khác giá, không gộp) |
 
 History.json **không** bị xóa record — chỉ rút gọn khi vẽ.
 
 ## Bước 4 — Vẽ (PriceChart)
 
-- Line `type="monotone"`, `connectNulls`
-- **ChangeDot:** hiện chấm khi
-  - điểm đầu series, hoặc
-  - điểm cuối series, hoặc
-  - `sell` khác điểm hợp lệ liền trước
+Phong cách giống chart vàng phổ biến (Kitco / TradingView line mặc định): **đường trước, chi tiết qua hover**.
+
+- Line `type="linear"` (không `monotone` — tránh cong giữa các scrape sát nhau)
+- `connectNulls`
+- **`dot={false}`** — không vẽ marker cố định (đầu/cuối plateau sát nhau trên 30D nhìn rối)
 - Hover: `activeDot` + tooltip (`toLocaleString('vi-VN')` theo epoch X)
 
-Hai điểm **khác giá** nhưng sát nhau trên filter 30D vẫn có thể trông chồng (scale hẹp); hover hoặc filter `1D`/`7D` tách rõ hơn. Đó là giới hạn pixel, không phải mất data.
+Đường vẫn đi qua mọi đỉnh sau bước 3; chỉ ẩn chấm. Hai đỉnh khác giá sát giờ trên filter dài vẫn đúng về data — dùng hover hoặc filter `1D`/`7D` để đọc chi tiết.
 
 ## Label “Nguồn cập nhật” trên StoreTab
 
 Lấy từ **điểm cuối history** của kind (`latestPoint`), không lấy giờ proxy live — khớp điểm cuối chart / JSON.
+
+Phần `(cách lần cập nhật trước đó X tiếng|phút)`: khoảng thời gian giữa tip và **mẫu history liền trước** cùng kind (`previousPoint` không lọc giá) — không phải “lần đổi giá gần nhất”, cũng không phải tuổi so với lúc mở trang. Format: [`formatElapsed`](src/lib/normalize.ts) (không gắn chữ “trước”).
+
+`SellDelta` (+/− đ) vẫn dùng `previousPoint(..., current)` để tìm mẫu **khác giá** gần nhất.
 
 ## File liên quan
 
@@ -103,5 +106,5 @@ Lấy từ **điểm cuối history** của kind (`latestPoint`), không lấy g
 | [`src/lib/history.ts`](src/lib/history.ts) | `filterHistory`, `latestPoint`, `previousPoint` |
 | [`src/lib/normalize.ts`](src/lib/normalize.ts) | `pointTimeMs`, `sourceUpdatedAtToMs` |
 | [`src/components/StoreTab.tsx`](src/components/StoreTab.tsx) | build + collapse + truyền `PriceChart` |
-| [`src/components/PriceChart.tsx`](src/components/PriceChart.tsx) | Recharts, ChangeDot, domain Y |
+| [`src/components/PriceChart.tsx`](src/components/PriceChart.tsx) | Recharts line-only, domain Y |
 | [`CRAWL.md`](CRAWL.md) | Cách scrape **ghi** history (khác UI chart) |

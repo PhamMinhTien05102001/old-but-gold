@@ -26,6 +26,11 @@ export function filterHistory(
   return points
 }
 
+/**
+ * Previous history sample for `kind`.
+ * - Without `current`: immediate predecessor of the tip (any price).
+ * - With `current`: last sample whose buy/sell differs (for sell delta only).
+ */
 export function previousPoint(
   history: PricePoint[],
   kind: PricePoint['kind'],
@@ -34,7 +39,6 @@ export function previousPoint(
   const matched = history.filter((p) => p.kind === kind)
   if (!matched.length) return undefined
 
-  // Prefer last point whose buy/sell differs from current (skip plateau duplicates).
   if (current) {
     for (let i = matched.length - 1; i >= 0; i--) {
       const p = matched[i]

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
 import { filterHistory, latestPoint, previousPoint } from '../lib/history'
 import {
-  formatTimeAgo,
+  formatElapsed,
   normalizeSourceUpdatedAt,
   pointTimeMs,
 } from '../lib/normalize'
@@ -56,8 +56,8 @@ function buildChartRows(points: PricePoint[], kinds: CurrentRow['kind'][]) {
 }
 
 /**
- * Keep first + last of each constant-price run so 1h-apart same-price
- * scrapes don't stack on top of each other on a multi-day x-axis.
+ * Keep first + last of each constant-price run so the line shows a true
+ * flat span in time (middle same-price scrapes are redundant vertices).
  */
 function collapseSamePricePlateaus(
   rows: Record<string, number | string>[],
@@ -135,10 +135,14 @@ export function StoreTab({
   const historyTip = primaryRow ? latestPoint(history, primaryRow.kind) : undefined
   const displaySourceUpdatedAt =
     historyTip?.sourceUpdatedAt ?? sourceUpdatedAt
+  // Gap vs immediate previous scrape (same or different price) — not vs now / last price change.
   const prevPoint = primaryRow
-    ? previousPoint(history, primaryRow.kind, primaryRow)
+    ? previousPoint(history, primaryRow.kind)
     : undefined
-  const prevAge = prevPoint ? formatTimeAgo(pointTimeMs(prevPoint)) : null
+  const prevAge =
+    prevPoint && historyTip
+      ? formatElapsed(pointTimeMs(prevPoint), pointTimeMs(historyTip))
+      : null
   const sourceUpdatedLabel = displaySourceUpdatedAt
     ? normalizeSourceUpdatedAt(displaySourceUpdatedAt)
     : undefined
