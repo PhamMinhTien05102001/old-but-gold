@@ -43,14 +43,16 @@ export function formatTimeAgo(ts: number, now = Date.now()): string {
   return `${hours} tiếng trước`
 }
 
-/** Elapsed span between two times (no “trước”), e.g. `5 tiếng`, `40 phút`. */
+/** Elapsed span between two times (no “trước”), e.g. `1 tiếng 30 phút`, `40 phút`. */
 export function formatElapsed(fromMs: number, toMs: number): string {
   const diffMs = Math.max(0, toMs - fromMs)
-  const minutes = Math.floor(diffMs / 60_000)
-  if (minutes < 1) return 'dưới 1 phút'
-  if (minutes < 60) return `${minutes} phút`
-  const hours = Math.floor(minutes / 60)
-  return `${hours} tiếng`
+  const totalMinutes = Math.floor(diffMs / 60_000)
+  if (totalMinutes < 1) return 'dưới 1 phút'
+  if (totalMinutes < 60) return `${totalMinutes} phút`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (minutes === 0) return `${hours} tiếng`
+  return `${hours} tiếng ${minutes} phút`
 }
 
 function pad2(n: string | number): string {

@@ -97,7 +97,7 @@ Phong cách giống chart vàng phổ biến (Kitco / TradingView line mặc đ�
 
 Lấy từ **điểm cuối history** của kind (`latestPoint`), không lấy giờ proxy live — khớp điểm cuối chart / JSON.
 
-Phần `(cách lần cập nhật trước đó X tiếng|phút)`: khoảng thời gian giữa tip và **mẫu history liền trước** cùng kind (`previousPoint` không lọc giá) — không phải “lần đổi giá gần nhất”, cũng không phải tuổi so với lúc mở trang. Format: [`formatElapsed`](src/lib/normalize.ts) (không gắn chữ “trước”).
+Phần `(cách lần cập nhật trước đó …)`: khoảng thời gian giữa tip và **mẫu history liền trước** cùng kind (`previousPoint` không lọc giá) — không phải “lần đổi giá gần nhất”, cũng không phải tuổi so với lúc mở trang. Format: [`formatElapsed`](src/lib/normalize.ts) — `40 phút` | `1 tiếng` | `1 tiếng 30 phút` (không gắn chữ “trước”).
 
 `SellDelta` (+/− đ) vẫn dùng `previousPoint(..., current)` để tìm mẫu **khác giá** gần nhất.
 
