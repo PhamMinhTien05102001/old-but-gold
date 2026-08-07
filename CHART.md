@@ -64,6 +64,8 @@ flowchart TD
 
 Không merge live/proxy vào chart — chỉ data trong history file.
 
+Scrape chỉ **ghi** history khi `sourceUpdatedAt` đổi (xem [CRAWL.md](CRAWL.md)); plateau cùng giá trên chart vẫn xảy ra khi tiệm đổi giờ cập nhật nhưng `sell` không đổi.
+
 ## Bước 3 — Gộp plateau cùng giá
 
 `collapseSamePricePlateaus` — rút gọn **đỉnh đường** (không liên quan chấm marker):

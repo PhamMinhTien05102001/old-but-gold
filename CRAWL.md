@@ -13,7 +13,7 @@ Production đọc JSON đã crawl sẵn trong `public/data/`. Local (`npm run de
 |------|---------|
 | [`scripts/sources.json`](scripts/sources.json) | Danh sách domain + parser (`hkn`, `kkvh`, `hn`) |
 | [`scripts/scrape.mjs`](scripts/scrape.mjs) | Orchestrator crawl + adaptive X |
-| [`public/data/history/{hkn,kkvh,hn}/history.json`](public/data/history) | Lịch sử + **giá hiện tại = điểm cuối**; append mỗi crawl OK |
+| [`public/data/history/{hkn,kkvh,hn}/history.json`](public/data/history) | Lịch sử + **giá hiện tại = điểm cuối**; append khi `sourceUpdatedAt` đổi |
 | [`public/data/schedule.json`](public/data/schedule.json) | State khoảng X, lịch crawl, `storeStatus` |
 | [`.github/workflows/scrape-gold.yml`](.github/workflows/scrape-gold.yml) | Heartbeat Actions + commit data |
 
@@ -26,7 +26,7 @@ GitHub Action (mỗi 30 phút)
   → node scripts/scrape.mjs
   → nếu chưa tới nextCrawlAt → skip (exit 0)
   → nếu tới hạn (hoặc --force) → crawl mọi source trong sources.json
-  → append mọi row crawl OK vào history/{store}/history.json
+  → với mỗi kind: append history chỉ khi sourceUpdatedAt khác tip cùng kind
   → so sánh buy/sell với điểm cuối history (chỉ để chỉnh X):
       giá đổi → X = max(30, X/2)
       giá không đổi → X = min(120, X*2)
@@ -68,11 +68,13 @@ Sau mỗi lần crawl thành công:
 
 ## History & so sánh “đổi giá”
 
-Mỗi lần crawl **thành công** (status `ok`), mọi `kind` tracked được **append** vào `history/{store}/history.json` — kể cả khi `buy`/`sell` trùng lần trước (chart sẽ nằm ngang giữa hai mốc `sourceUpdatedAt`).
+Mỗi lần crawl **thành công** (status `ok`), từng `kind` tracked chỉ được **append** vào `history/{store}/history.json` khi `sourceUpdatedAt` (giờ tiệm, đã normalize) **khác** điểm cuối history cùng kind. Cùng giờ tiệm → bỏ qua (không nhân đôi điểm). Thiếu `sourceUpdatedAt` → không append kind đó.
+
+`ts` vẫn là epoch ms lúc bot crawl — không dùng làm điều kiện ghi.
 
 App (prod / test fixtures) lấy giá hiện tại từ **điểm cuối history** theo store/kind.
 
-So sánh với điểm cuối history chỉ dùng để **chỉnh interval X** (và ghi `lastChangedKinds`):
+So sánh buy/sell với điểm cuối history chỉ dùng để **chỉnh interval X** (và ghi `lastChangedKinds`):
 
 - Khác buy/sell → `lastResult: changed`, rút ngắn X
 - Không kind nào đổi → `lastResult: unchanged`, nới X

@@ -2,7 +2,7 @@
  * Adaptive scrape for HKN + KKVH + Hồng Ngọc gold 9999 prices.
  * - Heartbeat: GitHub Actions every 30m
  * - Interval X: default/max 120m, min 30m; half on change, double on stable
- * - Every successful crawl appends history points (same price → flat chart segment)
+ * - Append history only when sourceUpdatedAt changes vs tip for that kind
  * - Current prices = last point(s) in history/{store}/history.json (no latest/ files)
  * - Layout:
  *     public/data/history/{hkn,kkvh,hn}/history.json
@@ -312,12 +312,17 @@ function changedKinds(prevByKind, nextSnapshots) {
   return changed
 }
 
-/** One history point per row from a successful crawl (duplicates allowed → flat line). */
-function historyEntriesFromSnaps(snaps, now) {
+/** Append only when shop sourceUpdatedAt differs from history tip (same kind). */
+function historyEntriesFromSnaps(snaps, now, prevByKind) {
   const additions = []
   for (const snap of snaps) {
+    const sourceUpdatedAt = normalizeSourceUpdatedAt(snap.sourceUpdatedAt)
+    if (!sourceUpdatedAt) continue
     for (const row of snap.rows) {
       if (!isTrackedKind(row.kind)) continue
+      const prev = prevByKind.get(row.kind)
+      const prevSrc = normalizeSourceUpdatedAt(prev?.sourceUpdatedAt)
+      if (prevSrc && prevSrc === sourceUpdatedAt) continue
       additions.push({
         ts: now,
         store: snap.store,
@@ -325,7 +330,7 @@ function historyEntriesFromSnaps(snaps, now) {
         label: row.label,
         buy: row.buy,
         sell: row.sell,
-        sourceUpdatedAt: snap.sourceUpdatedAt,
+        sourceUpdatedAt,
       })
     }
   }
@@ -464,7 +469,7 @@ async function main() {
 
   const changedFresh = changedKinds(prevByKind, freshSnaps)
   const priceChanged = changedFresh.length > 0
-  const historyAdditions = historyEntriesFromSnaps(freshSnaps, now)
+  const historyAdditions = historyEntriesFromSnaps(freshSnaps, now, prevByKind)
 
   let interval = Number(schedule.intervalMinutes) || DEFAULT_INTERVAL
   if (priceChanged) {
