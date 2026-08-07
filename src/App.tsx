@@ -4,6 +4,7 @@ import { routes } from './routes.ts'
 import { useGoldPrices } from './context/GoldPricesContext.tsx'
 import { isStoreUnhealthy } from './lib/stores.ts'
 import type { StoreId } from './types.ts'
+import { PageSkeleton } from './components/PageSkeleton.tsx'
 
 function routeNeedsAlert(
   routeId: string,
@@ -21,7 +22,7 @@ function routeNeedsAlert(
 }
 
 export default function App() {
-  const { storeStatus } = useGoldPrices()
+  const { status, error, storeStatus } = useGoldPrices()
 
   return (
     <div className="mx-auto max-w-[1100px] px-3.5 py-4 pb-8 sm:px-5 sm:py-6 sm:pb-12">
@@ -55,7 +56,18 @@ export default function App() {
       </nav>
 
       <main>
-        <Outlet />
+        {status === 'loading' ? (
+          <PageSkeleton />
+        ) : status === 'error' ? (
+          <section className="border-line bg-surface rounded-2xl border px-4 py-5 shadow-[0_18px_40px_rgba(26,20,16,0.18)] sm:px-[1.15rem]">
+            <h2 className="font-display mb-2 text-[1.25rem] text-[#991b1b]">
+              Không tải được dữ liệu
+            </h2>
+            <p className="text-muted m-0 text-[0.95rem]">{error ?? 'Vui lòng thử lại sau.'}</p>
+          </section>
+        ) : (
+          <Outlet />
+        )}
       </main>
     </div>
   )

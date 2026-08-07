@@ -21,7 +21,11 @@ const DEFAULT_STATUS: StoreStatusMap = {
   hn: 'ok',
 }
 
+export type LoadStatus = 'loading' | 'ready' | 'error'
+
 type GoldPricesContextValue = {
+  status: LoadStatus
+  /** True while the initial (or in-flight) fetch has not finished. */
   loading: boolean
   error: string | null
   history: PricePoint[]
@@ -38,7 +42,7 @@ type GoldPricesContextValue = {
 const GoldPricesContext = createContext<GoldPricesContextValue | null>(null)
 
 export function GoldPricesProvider({ children }: { children: ReactNode }) {
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<LoadStatus>('loading')
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<PricePoint[]>([])
   const [hkn, setHkn] = useState<StoreSnapshot | null>(null)
@@ -47,21 +51,21 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
   const [storeStatus, setStoreStatus] = useState<StoreStatusMap>(DEFAULT_STATUS)
 
   const loadPrices = useCallback(async () => {
-    setLoading(true)
+    setStatus('loading')
     setError(null)
     try {
       const remote = await fetchRemoteHistory()
-      const { hkn: h, kkvh: k, hn: n, storeStatus: status } =
+      const { hkn: h, kkvh: k, hn: n, storeStatus: nextStatus } =
         await fetchAllSnapshots(remote)
       setHkn(h)
       setKkvh(k)
       setHn(n)
-      setStoreStatus(status)
+      setStoreStatus(nextStatus)
       setHistory(remote)
+      setStatus('ready')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Không tải được giá')
-    } finally {
-      setLoading(false)
+      setStatus('error')
     }
   }, [])
 
@@ -71,7 +75,8 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<GoldPricesContextValue>(
     () => ({
-      loading,
+      status,
+      loading: status === 'loading',
       error,
       history,
       hkn,
@@ -83,7 +88,7 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
       storeStatus,
       getStoreStatus: (id) => storeStatus[id] ?? 'ok',
     }),
-    [loading, error, history, hkn, kkvh, hn, storeStatus],
+    [status, error, history, hkn, kkvh, hn, storeStatus],
   )
 
   return <GoldPricesContext.Provider value={value}>{children}</GoldPricesContext.Provider>
