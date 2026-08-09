@@ -1,15 +1,11 @@
 {
-  "intervalMinutes": 60,
+  "intervalMinutes": 120,
   "minIntervalMinutes": 30,
   "maxIntervalMinutes": 120,
-  "lastCrawlAt": "2026-08-09T05:14:18.301Z",
-  "nextCrawlAt": "2026-08-09T06:14:18.301Z",
-  "lastResult": "changed",
-  "lastChangedKinds": [
-    "hkn_nhan_9999",
-    "kkvh_9999",
-    "hn_nhan_9999"
-  ],
+  "lastCrawlAt": "2026-08-09T07:34:43.099Z",
+  "nextCrawlAt": "2026-08-09T09:34:43.099Z",
+  "lastResult": "unchanged",
+  "lastChangedKinds": [],
   "storeStatus": [
     {
       "store": "hkn",
