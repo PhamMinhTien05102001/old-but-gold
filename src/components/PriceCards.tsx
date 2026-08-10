@@ -1,4 +1,4 @@
-import type { ChartRange, CurrentRow, GoldKind, PricePoint } from '../types'
+import type { CurrentRow, GoldKind, PricePoint } from '../types'
 import { previousPoint } from '../lib/history'
 import { formatVnd, pointTimeMs, sourceUpdatedAtToMs } from '../lib/normalize'
 import { SellDelta } from './SellDelta'
@@ -8,7 +8,8 @@ type Props = {
   history: PricePoint[]
   /** History already filtered by the selected chart range. */
   rangeHistory: PricePoint[]
-  range: ChartRange
+  /** Display label for the active window (preset or custom dates). */
+  rangeLabel: string
   sourceUpdatedAt?: string
 }
 
@@ -33,7 +34,7 @@ export function PriceCards({
   rows,
   history,
   rangeHistory,
-  range,
+  rangeLabel,
   sourceUpdatedAt,
 }: Props) {
   const updatedAt = sourceUpdatedAtToMs(sourceUpdatedAt)
@@ -69,7 +70,9 @@ export function PriceCards({
             </div>
 
             <div className="border-line flex min-w-0 flex-col justify-start border-l pl-4 text-left">
-              <p className="text-muted m-0 text-[0.85rem]">Thấp nhất · {range}</p>
+              <p className="text-muted m-0 text-[0.85rem]">
+                Thấp nhất · {rangeLabel}
+              </p>
               {low ? (
                 <>
                   <p className="font-display m-0 text-[1.2rem] font-bold">

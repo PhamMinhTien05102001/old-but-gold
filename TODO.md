@@ -11,7 +11,12 @@ Danh sách việc cần làm tiếp (ưu tiên chưa xếp cứng — làm theo 
 
 # Yêu cầu của bạn
 
-## 1. Bộ filter thời gian linh hoạt hơn
+## 1. Bộ filter thời gian linh hoạt hơn — ✅ Đã làm
+
+Preset `1D` | `7D` | `30D` | `3M` | `All` giữ nguyên; thêm **Tuỳ chọn** (một ngày hoặc khoảng A→B). Xem [`CHART.md`](CHART.md), [`RangeFilter`](src/components/RangeFilter.tsx), [`filterHistory`](src/lib/history.ts).
+
+<details>
+<summary>Mô tả yêu cầu gốc (đã triển khai)</summary>
 
 ### Vấn đề hiện tại
 
@@ -38,6 +43,8 @@ Preset cũ (`1D`, `7D`, …) có thể giữ song song để thao tác nhanh; da
 - UI: date picker (single) + range picker, hoặc một control hỗ trợ cả hai mode
 - Logic lọc: mở rộng `filterHistory` nhận `fromMs` / `toMs` thay vì chỉ `range` preset
 - Trục X / domain chart cần khớp khoảng đã chọn (không bị “kéo” về gần hiện tại)
+
+</details>
 
 ---
 

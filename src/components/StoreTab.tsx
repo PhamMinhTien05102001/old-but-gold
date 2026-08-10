@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
-import type { ChartRange, CurrentRow, PricePoint, StoreId } from '../types'
-import { filterHistory, latestPoint, previousPoint } from '../lib/history'
+import type { ChartTimeFilter, CurrentRow, PricePoint, StoreId } from '../types'
+import {
+  earliestPointMs,
+  filterHistory,
+  formatTimeFilterLabel,
+  latestPoint,
+  previousPoint,
+  resolveFromToMs,
+} from '../lib/history'
 import {
   formatElapsed,
   normalizeSourceUpdatedAt,
@@ -103,12 +110,28 @@ export function StoreTab({
   health = 'ok',
   sourceUrl,
 }: Props) {
-  const [range, setRange] = useState<ChartRange>('30D')
+  const [timeFilter, setTimeFilter] = useState<ChartTimeFilter>({
+    mode: 'preset',
+    range: '30D',
+  })
   const kinds = rows.map((r) => r.kind)
   const storeHistory = useMemo(
-    () => filterHistory(history, range, kinds),
-    [history, range, kinds],
+    () => filterHistory(history, timeFilter, kinds),
+    [history, timeFilter, kinds],
   )
+  const rangeLabel = useMemo(
+    () => formatTimeFilterLabel(timeFilter),
+    [timeFilter],
+  )
+  const xDomain = useMemo((): [number, number] | undefined => {
+    if (timeFilter.mode === 'preset') return undefined
+    const bounds = resolveFromToMs(timeFilter)
+    if (!bounds) return undefined
+    // Open start (from empty): left edge = first retained point, not epoch 0
+    const fromMs = bounds.fromMs ?? earliestPointMs(storeHistory)
+    if (fromMs == null) return undefined
+    return [fromMs, bounds.toMs]
+  }, [timeFilter, storeHistory])
 
   const chartData = useMemo(
     () => buildChartData(storeHistory, kinds),
@@ -159,7 +182,7 @@ export function StoreTab({
             </p>
           ) : null}
         </div>
-        <RangeFilter value={range} onChange={setRange} />
+        <RangeFilter value={timeFilter} onChange={setTimeFilter} />
       </header>
 
       {showStaleBanner ? (
@@ -191,7 +214,7 @@ export function StoreTab({
             rows={rows}
             history={history}
             rangeHistory={storeHistory}
-            range={range}
+            rangeLabel={rangeLabel}
             sourceUpdatedAt={displaySourceUpdatedAt}
           />
           <PriceTable rows={rows} />
@@ -202,6 +225,7 @@ export function StoreTab({
           <PriceChart
             data={chartData}
             series={series}
+            xDomain={xDomain}
             emptyMessage="Chưa có lịch sử. Dữ liệu sẽ tích lũy theo các lần scrape."
           />
         </>

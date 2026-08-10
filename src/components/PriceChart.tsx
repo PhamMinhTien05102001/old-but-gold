@@ -20,6 +20,8 @@ type Props = {
   data: Record<string, string | number>[]
   series: ChartSeries[]
   emptyMessage?: string
+  /** When set (custom day/range), lock X axis to the selected window. */
+  xDomain?: [number, number]
 }
 
 function formatTick(ts: number): string {
@@ -77,6 +79,7 @@ export function PriceChart({
   data,
   series,
   emptyMessage = 'Chưa có dữ liệu biểu đồ',
+  xDomain,
 }: Props) {
   if (!data.length) {
     return (
@@ -96,7 +99,7 @@ export function PriceChart({
           <XAxis
             dataKey="ts"
             type="number"
-            domain={['dataMin', 'dataMax']}
+            domain={xDomain ?? ['dataMin', 'dataMax']}
             tickFormatter={formatTick}
             stroke="#7a6a55"
             fontSize={12}

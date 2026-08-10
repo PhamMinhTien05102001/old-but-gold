@@ -27,3 +27,10 @@ export type StoreSnapshot = {
 }
 
 export type ChartRange = '1D' | '7D' | '30D' | '3M' | 'All'
+
+/** Chart time window: quick preset, single calendar day, or inclusive A→B range. */
+export type ChartTimeFilter =
+  | { mode: 'preset'; range: ChartRange }
+  | { mode: 'day'; day: string } // YYYY-MM-DD
+  /** Range: omit/empty `from` → start of history; omit/empty `to` → now. */
+  | { mode: 'range'; from?: string | null; to?: string | null }

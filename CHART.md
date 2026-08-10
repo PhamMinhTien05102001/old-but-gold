@@ -29,30 +29,38 @@ Code: [`src/lib/normalize.ts`](src/lib/normalize.ts) (`pointTimeMs`), [`src/comp
 
 ```text
 history (tất cả store)
-  → filterHistory(range, kinds của tab)
+  → filterHistory(timeFilter, kinds của tab)
   → buildChartRows          // 1 row / 1 record history
   → collapseSamePricePlateaus
   → PriceChart (Recharts)
        · Line type=linear, connectNulls, dot=false
        · Tooltip / activeDot khi hover
+       · X domain khóa theo ngày/khoảng khi chọn tuỳ chọn
 ```
 
 ```mermaid
 flowchart TD
   hist[history.json]
-  filt[filterHistory range + kind]
+  filt[filterHistory timeFilter + kind]
   rows[buildChartRows]
   collapse[collapseSamePricePlateaus]
   chart[PriceChart]
   hist --> filt --> rows --> collapse --> chart
 ```
 
-## Bước 1 — Lọc theo range & kind
+## Bước 1 — Lọc theo time filter & kind
 
-[`filterHistory`](src/lib/history.ts):
+[`filterHistory`](src/lib/history.ts) nhận `ChartTimeFilter`:
 
-- Range: `1D` | `7D` | `30D` | `3M` | `All` (cutoff theo `pointTimeMs`, không theo `ts` crawl)
-- Chỉ giữ `kind` của cửa hàng đang mở (HKN / KKVH / HN)
+| Mode | Hành vi |
+|------|---------|
+| `preset` | `1D` \| `7D` \| `30D` \| `3M` \| `All` — cutoff từ `Date.now()` lùi lại (theo `pointTimeMs`) |
+| `day` | Một ngày `YYYY-MM-DD`: `00:00:00` → `23:59:59.999` (local, cùng TZ parse `sourceUpdatedAt`); không cho chọn sau hôm nay |
+| `range` | A→B inclusive (swap nếu A > B). Chỉ `from` → từ đầu ngày A đến **now**; chỉ `to` → từ **điểm data đầu** đến hết ngày B (trục X không dùng epoch 0). `min`/`max` chéo giữa hai ô; `max` ≤ hôm nay |
+
+UI: [`RangeFilter`](src/components/RangeFilter.tsx) — preset nhanh + panel **Tuỳ chọn** (Ngày / Khoảng, `<input type="date">`).
+
+Chỉ giữ `kind` của cửa hàng đang mở (HKN / KKVH / HN).
 
 ## Bước 2 — Map sang điểm chart
 
@@ -90,6 +98,7 @@ Phong cách giống chart vàng phổ biến (Kitco / TradingView line mặc đ�
 - `connectNulls`
 - **`dot={false}`** — không vẽ marker cố định (đầu/cuối plateau sát nhau trên 30D nhìn rối)
 - Hover: `activeDot` + tooltip (`toLocaleString('vi-VN')` theo epoch X)
+- Khi filter `day` / `range`: `xDomain=[fromMs, toMs]` để trục X khớp khoảng đã chọn (không co theo min/max data)
 
 Đường vẫn đi qua mọi đỉnh sau bước 3; chỉ ẩn chấm. Hai đỉnh khác giá sát giờ trên filter dài vẫn đúng về data — dùng hover hoặc filter `1D`/`7D` để đọc chi tiết.
 
@@ -105,8 +114,9 @@ Phần `(cách lần cập nhật trước đó …)`: khoảng thời gian gi�
 
 | File | Việc |
 |------|------|
-| [`src/lib/history.ts`](src/lib/history.ts) | `filterHistory`, `latestPoint`, `previousPoint` |
+| [`src/lib/history.ts`](src/lib/history.ts) | `filterHistory`, `dayBounds`, `resolveFromToMs`, `formatTimeFilterLabel`, `latestPoint`, `previousPoint` |
 | [`src/lib/normalize.ts`](src/lib/normalize.ts) | `pointTimeMs`, `sourceUpdatedAtToMs` |
-| [`src/components/StoreTab.tsx`](src/components/StoreTab.tsx) | build + collapse + truyền `PriceChart` |
-| [`src/components/PriceChart.tsx`](src/components/PriceChart.tsx) | Recharts line-only, domain Y |
+| [`src/components/StoreTab.tsx`](src/components/StoreTab.tsx) | build + collapse + truyền `PriceChart` / `RangeFilter` |
+| [`src/components/RangeFilter.tsx`](src/components/RangeFilter.tsx) | Preset + Tuỳ chọn ngày/khoảng |
+| [`src/components/PriceChart.tsx`](src/components/PriceChart.tsx) | Recharts line-only, domain Y / X |
 | [`CRAWL.md`](CRAWL.md) | Cách scrape **ghi** history (khác UI chart) |
