@@ -1,0 +1,12 @@
+{
+  "id": "kkvh",
+  "label": "Kim Khánh Việt Hùng",
+  "url": "https://kimkhanhviethung.vn/tra-cuu-gia-vang.html",
+  "parser": "kkvh",
+  "crawl": {
+    "mode": "adaptive",
+    "intervalMinutes": 60,
+    "minIntervalMinutes": 30,
+    "maxIntervalMinutes": 120
+  }
+}

@@ -81,17 +81,31 @@ function normalizeHistoryPoint(p: PricePoint): PricePoint {
 }
 
 type ScheduleFile = {
+  stores?: Record<
+    string,
+    { status?: string; rows?: number; error?: string }
+  >
   storeStatus?: { store: string; status: string; rows?: number }[]
 }
 
 async function fetchScheduleStatus(): Promise<StoreStatusMap> {
   const schedule = await fetchJson<ScheduleFile>('schedule.json')
   const map: StoreStatusMap = { ...DEFAULT_STATUS }
-  for (const entry of schedule?.storeStatus ?? []) {
-    if (entry.store !== 'hkn' && entry.store !== 'kkvh' && entry.store !== 'hn') continue
-    if (entry.status === 'ok' || entry.status === 'fallback' || entry.status === 'failed') {
-      map[entry.store] = entry.status
+
+  const apply = (store: string, status: string | undefined) => {
+    if (store !== 'hkn' && store !== 'kkvh' && store !== 'hn') return
+    if (status === 'ok' || status === 'fallback' || status === 'failed') {
+      map[store] = status
     }
+  }
+
+  if (schedule?.stores) {
+    for (const [id, st] of Object.entries(schedule.stores)) {
+      apply(id, st?.status)
+    }
+  }
+  for (const entry of schedule?.storeStatus ?? []) {
+    apply(entry.store, entry.status)
   }
   return map
 }

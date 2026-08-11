@@ -1,0 +1,13 @@
+{
+  "id": "example",
+  "label": "Tên tiệm",
+  "url": "https://example.com/gia-vang/",
+  "parser": "example",
+  "crawl": {
+    "mode": "adaptive",
+    "intervalMinutes": 60,
+    "minIntervalMinutes": 30,
+    "maxIntervalMinutes": 120
+  },
+  "_comment": "Copy to {id}.json (no leading _). Fixed mode: { \"mode\": \"fixed\", \"intervalMinutes\": 30 }. New HTML also needs PARSERS + isTrackedKind in scrape.mjs (and UI types if new tab)."
+}

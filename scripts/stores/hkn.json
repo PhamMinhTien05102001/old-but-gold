@@ -1,0 +1,12 @@
+{
+  "id": "hkn",
+  "label": "Hoa Kim Nguyên",
+  "url": "https://hoakimnguyen.com/tra-cuu-gia-vang/",
+  "parser": "hkn",
+  "crawl": {
+    "mode": "adaptive",
+    "intervalMinutes": 60,
+    "minIntervalMinutes": 30,
+    "maxIntervalMinutes": 120
+  }
+}

@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Scrape prices
-        # Manual runs always crawl; scheduled runs respect adaptive nextCrawlAt
+        # Manual runs always crawl all stores; scheduled runs respect per-store nextCrawlAt
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             node scripts/scrape.mjs --force

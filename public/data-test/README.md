@@ -11,7 +11,7 @@ data-test/
       history.json
     hn/
       history.json
-  schedule.json
+  schedule.json             # runtime stores.{id} (cùng shape prod)
 ```
 
 Giá hiện tại = điểm cuối mỗi `history.json`. Không còn thư mục `latest/`.

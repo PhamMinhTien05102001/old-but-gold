@@ -8,7 +8,7 @@ export type StoreMeta = {
   url: string
 }
 
-/** Frontend mirror of scripts/sources.json — URLs for stale-data notices. */
+/** Frontend mirror of scripts/stores/{id}.json — URLs for stale-data notices. */
 export const STORE_META: Record<StoreId, StoreMeta> = {
   hkn: {
     id: 'hkn',

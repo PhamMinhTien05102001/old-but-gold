@@ -48,7 +48,12 @@ Preset cũ (`1D`, `7D`, …) có thể giữ song song để thao tác nhanh; da
 
 ---
 
-## 2. Crawl theo từng cửa hàng (config & lịch riêng)
+## 2. Crawl theo từng cửa hàng (config & lịch riêng) — ✅ Đã làm
+
+Config per-store trong [`scripts/stores/`](scripts/stores/) (`adaptive` \| `fixed`), runtime một file [`public/data/schedule.json`](public/data/schedule.json) (`stores.{id}`), orchestrator chỉ crawl store tới hạn. Xem [`CRAWL.md`](CRAWL.md).
+
+<details>
+<summary>Mô tả yêu cầu gốc (đã triển khai)</summary>
 
 ### Vấn đề hiện tại
 
@@ -56,31 +61,23 @@ Crawl dùng **một** adaptive interval `X` chung cho cả hệ thống ([`CRAWL
 
 - Heartbeat Actions mỗi 30 phút
 - Sau crawl: giá đổi → rút X; giá không đổi → nới X (min 30p, max 120p)
-- Khi tới hạn thì crawl **mọi** source trong `sources.json` cùng lúc
+- Khi tới hạn thì crawl **mọi** source cùng lúc
 
 Một số tiệm ít đổi giá → crawl thưa (3–4 tiếng) là đủ.  
 Một số tiệm cập nhật thường xuyên → cần crawl dày hơn (vd. cố định **30 phút/lần**), không nên bị kéo theo interval chung khi các tiệm khác “im”.
 
 ### Hướng làm
 
-Tách lịch / config **theo từng cửa hàng** (store / kind), ví dụ trong `sources.json` hoặc file schedule per-store:
+Tách lịch / config **theo từng cửa hàng**:
 
 | Cửa hàng | Ví dụ config |
 |----------|----------------|
-| Tiệm ít đổi | Adaptive: min 30p → max 180–240p (3–4 tiếng) |
-| Tiệm hay cập nhật | Fixed: luôn crawl mỗi **30 phút** (không nhân đôi X khi giá đứng) |
+| Tiệm ít đổi | Adaptive: min 30p → max 120p |
+| Tiệm hay cập nhật | Fixed: luôn crawl mỗi **30 phút** |
 
-Mỗi store có:
+Mỗi store có `lastCrawlAt` / `nextCrawlAt` / mode riêng; heartbeat chỉ crawl store đã tới hạn.
 
-- `lastCrawlAt` / `nextCrawlAt` riêng
-- `intervalMinutes` (hoặc mode `adaptive` | `fixed`) riêng
-- Khi heartbeat chạy: chỉ crawl những store đã tới `nextCrawlAt`
-
-### Gợi ý kỹ thuật
-
-- Mở rộng `schedule.json` → state theo store (hoặc `schedule/{store}.json`)
-- Orchestrator `scrape.mjs`: skip từng store thay vì skip cả run
-- Workflow vẫn heartbeat `*/30`; logic “có crawl hay không” nằm ở config từng store
+</details>
 
 ---
 

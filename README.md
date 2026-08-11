@@ -18,8 +18,8 @@ cp .env.example .env   # hoặc tự tạo .env
 npm run dev            # VITE_USE_TEST_DATA=true → data-test; false → proxy live
 npm run build          # production build (base: /old-but-gold/)
 npm run preview        # preview build + proxy
-npm run scrape         # crawl theo lịch adaptive
-npm run scrape:force   # crawl ngay (bỏ qua nextCrawlAt)
+npm run scrape         # crawl store đã tới hạn (per-store schedule)
+npm run scrape:force   # crawl mọi store (bỏ qua nextCrawlAt)
 npm run format         # Prettier
 npm run lint           # oxlint
 ```
@@ -41,11 +41,11 @@ src/
   context/GoldPricesContext.tsx
   lib/                      # fetch, parse, history
 scripts/
-  scrape.mjs                # crawl adaptive
-  sources.json              # danh sách domain
+  scrape.mjs                # crawl per-store (adaptive | fixed)
+  stores/{id}.json          # config từng tiệm (+ _template.json)
 public/data/                # data chuẩn (crawl / pull)
   history/{hkn,kkvh,hn}/history.json   # lịch sử; điểm cuối = giá hiện tại
-  schedule.json
+  schedule.json             # runtime mọi tiệm (stores.{id})
 public/data-test/           # fixtures local khi VITE_USE_TEST_DATA=true
 .github/workflows/          # deploy-pages + scrape-gold
 ```
@@ -54,6 +54,6 @@ public/data-test/           # fixtures local khi VITE_USE_TEST_DATA=true
 
 ## Tài liệu khác
 
-- [CRAWL.md](./CRAWL.md) — logic crawl / adaptive interval / data files
+- [CRAWL.md](./CRAWL.md) — logic crawl / per-store schedule / data files
 - [CHART.md](./CHART.md) — logic lọc / gộp / vẽ dữ liệu lên biểu đồ
 - [DEPLOY.md](./DEPLOY.md) — deploy GitHub Pages

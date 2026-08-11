@@ -1,18 +1,16 @@
 /**
- * Adaptive scrape for HKN + KKVH + Hồng Ngọc gold 9999 prices.
+ * Per-store gold price scrape (HKN / KKVH / Hồng Ngọc, …).
  * - Heartbeat: GitHub Actions every 30m
- * - Interval X: default/max 120m, min 30m; half on change, double on stable
+ * - Config: scripts/stores/{id}.json (skip _*.json templates)
+ * - Modes: adaptive (half/double X) | fixed (constant interval)
+ * - Runtime state: public/data/schedule.json → stores.{id}
  * - Append history only when sourceUpdatedAt changes vs tip for that kind
- * - Current prices = last point(s) in history/{store}/history.json (no latest/ files)
- * - Layout:
- *     public/data/history/{hkn,kkvh,hn}/history.json
- *     public/data/schedule.json
  *
  * Usage:
  *   node scripts/scrape.mjs
  *   node scripts/scrape.mjs --force
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as cheerio from 'cheerio'
@@ -20,11 +18,8 @@ import * as cheerio from 'cheerio'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const DATA_DIR = path.join(ROOT, 'public', 'data')
-const SOURCES_PATH = path.join(__dirname, 'sources.json')
-
-const MIN_INTERVAL = 30
-const MAX_INTERVAL = 120
-const DEFAULT_INTERVAL = 120
+const STORES_DIR = path.join(__dirname, 'stores')
+const SCHEDULE_PATH = path.join(DATA_DIR, 'schedule.json')
 
 const force = process.argv.includes('--force')
 
@@ -86,7 +81,6 @@ function normalizeSourceUpdatedAt(raw) {
 function classifyHkn(label) {
   const n = normalizeLabel(label)
   if (!n.includes('9999')) return null
-  // Only track nhẫn 9999 — skip khâu/vĩ and other 9999 variants
   if (n.includes('nhẫn') || n.includes('nhan')) return 'hkn_nhan_9999'
   return null
 }
@@ -108,8 +102,6 @@ function isHnNhan9999(label) {
   if (n.includes('nu trang') || n.includes('nữ trang') || n.includes('990')) return false
   return n.includes('nhẫn') || n.includes('nhan')
 }
-
-const STORES = ['hkn', 'kkvh', 'hn']
 
 async function fetchText(url) {
   const res = await fetch(url, {
@@ -221,6 +213,7 @@ function parseHn(html) {
   }
 }
 
+/** Register new HTML parsers here when cloning a store with a new layout. */
 const PARSERS = {
   hkn: parseHkn,
   kkvh: parseKkvh,
@@ -232,17 +225,6 @@ async function loadJson(file, fallback) {
     return JSON.parse(await readFile(file, 'utf8'))
   } catch {
     return fallback
-  }
-}
-
-function defaultSchedule() {
-  return {
-    intervalMinutes: DEFAULT_INTERVAL,
-    minIntervalMinutes: MIN_INTERVAL,
-    maxIntervalMinutes: MAX_INTERVAL,
-    lastCrawlAt: null,
-    nextCrawlAt: null,
-    lastResult: 'init',
   }
 }
 
@@ -260,6 +242,175 @@ function toIso(ms) {
 
 function clampInterval(minutes, min, max) {
   return Math.min(max, Math.max(min, minutes))
+}
+
+function historyPath(storeId) {
+  return path.join(DATA_DIR, 'history', storeId, 'history.json')
+}
+
+/**
+ * Load store configs from scripts/stores/*.json (skip _prefix templates).
+ * @returns {Promise<object[]>}
+ */
+async function loadStoreConfigs() {
+  let names
+  try {
+    names = await readdir(STORES_DIR)
+  } catch {
+    throw new Error(`Missing store configs dir: ${STORES_DIR}`)
+  }
+
+  const configs = []
+  for (const name of names.sort()) {
+    if (!name.endsWith('.json') || name.startsWith('_')) continue
+    const file = path.join(STORES_DIR, name)
+    const raw = await loadJson(file, null)
+    if (!raw || typeof raw !== 'object') {
+      throw new Error(`Invalid store config: ${file}`)
+    }
+    if (!raw.id || !raw.url || !raw.parser || !raw.crawl?.mode) {
+      throw new Error(`Store config missing id/url/parser/crawl.mode: ${file}`)
+    }
+    if (raw.crawl.mode !== 'adaptive' && raw.crawl.mode !== 'fixed') {
+      throw new Error(`Unknown crawl.mode "${raw.crawl.mode}" in ${file}`)
+    }
+    if (!Number(raw.crawl.intervalMinutes)) {
+      throw new Error(`crawl.intervalMinutes required in ${file}`)
+    }
+    if (raw.crawl.mode === 'adaptive') {
+      if (!Number(raw.crawl.minIntervalMinutes) || !Number(raw.crawl.maxIntervalMinutes)) {
+        throw new Error(`adaptive store needs min/maxIntervalMinutes: ${file}`)
+      }
+    }
+    if (!PARSERS[raw.parser]) {
+      throw new Error(`Unknown parser "${raw.parser}" in ${file} — register in PARSERS`)
+    }
+    configs.push(raw)
+  }
+
+  if (!configs.length) {
+    throw new Error(`No store configs in ${STORES_DIR} (copy _template.json → {id}.json)`)
+  }
+  return configs
+}
+
+/**
+ * In-memory state = policy from config + runtime from schedule.json.
+ * Persisted runtime only: lastCrawlAt, nextCrawlAt, lastResult, lastChangedKinds,
+ * status, rows, error?; adaptive also keeps live intervalMinutes (current X).
+ */
+function defaultStoreState(config, scheduleFile = null) {
+  const crawl = config.crawl
+  const mode = crawl.mode
+  const base = {
+    mode,
+    intervalMinutes: Number(crawl.intervalMinutes),
+    lastCrawlAt: null,
+    nextCrawlAt: null,
+    lastResult: 'init',
+    lastChangedKinds: [],
+    status: 'ok',
+    rows: 0,
+  }
+  if (mode === 'adaptive') {
+    base.minIntervalMinutes = Number(crawl.minIntervalMinutes)
+    base.maxIntervalMinutes = Number(crawl.maxIntervalMinutes)
+  }
+
+  if (!scheduleFile || typeof scheduleFile !== 'object') return base
+
+  const fromStores = scheduleFile.stores?.[config.id]
+  if (fromStores && typeof fromStores === 'object') {
+    return mergeRuntime(config, base, fromStores)
+  }
+
+  // Legacy flat schedule.json (single global X)
+  if (scheduleFile.lastCrawlAt || scheduleFile.nextCrawlAt) {
+    if (scheduleFile.lastCrawlAt) base.lastCrawlAt = scheduleFile.lastCrawlAt
+    if (mode === 'adaptive') {
+      if (Number(scheduleFile.intervalMinutes)) {
+        base.intervalMinutes = Number(scheduleFile.intervalMinutes)
+      }
+      if (scheduleFile.nextCrawlAt) base.nextCrawlAt = scheduleFile.nextCrawlAt
+    } else if (scheduleFile.lastCrawlAt) {
+      const lastMs = toEpoch(scheduleFile.lastCrawlAt)
+      if (lastMs != null) {
+        base.nextCrawlAt = toIso(lastMs + base.intervalMinutes * 60_000)
+      }
+    }
+  }
+
+  const st = Array.isArray(scheduleFile.storeStatus)
+    ? scheduleFile.storeStatus.find((s) => s.store === config.id)
+    : null
+  if (st?.status) base.status = st.status
+  if (Number(st?.rows)) base.rows = Number(st.rows)
+
+  return base
+}
+
+function mergeRuntime(config, base, runtime) {
+  const out = { ...base }
+  if (runtime.lastCrawlAt != null) out.lastCrawlAt = runtime.lastCrawlAt
+  if (runtime.nextCrawlAt != null) out.nextCrawlAt = runtime.nextCrawlAt
+  if (runtime.lastResult != null) out.lastResult = runtime.lastResult
+  if (Array.isArray(runtime.lastChangedKinds)) {
+    out.lastChangedKinds = runtime.lastChangedKinds
+  }
+  if (runtime.status != null) out.status = runtime.status
+  if (runtime.rows != null) out.rows = Number(runtime.rows) || 0
+  if (runtime.error != null) out.error = runtime.error
+  // Live X only for adaptive (fixed always uses config.crawl.intervalMinutes)
+  if (
+    config.crawl.mode === 'adaptive' &&
+    Number(runtime.intervalMinutes)
+  ) {
+    out.intervalMinutes = Number(runtime.intervalMinutes)
+  }
+  // Policy always from config (ignore stale mode/min/max in old schedule files)
+  out.mode = config.crawl.mode
+  if (config.crawl.mode === 'adaptive') {
+    out.minIntervalMinutes = Number(config.crawl.minIntervalMinutes)
+    out.maxIntervalMinutes = Number(config.crawl.maxIntervalMinutes)
+  } else {
+    delete out.minIntervalMinutes
+    delete out.maxIntervalMinutes
+    out.intervalMinutes = Number(config.crawl.intervalMinutes)
+  }
+  return out
+}
+
+/** Runtime slice written to schedule.json (no crawl policy duplication). */
+function toPersistedRuntime(config, state) {
+  const out = {
+    lastCrawlAt: state.lastCrawlAt,
+    nextCrawlAt: state.nextCrawlAt,
+    lastResult: state.lastResult,
+    lastChangedKinds: state.lastChangedKinds ?? [],
+    status: state.status || 'ok',
+    rows: Number(state.rows) || 0,
+  }
+  if (state.error) out.error = state.error
+  if (config.crawl.mode === 'adaptive') {
+    out.intervalMinutes =
+      Number(state.intervalMinutes) || Number(config.crawl.intervalMinutes)
+  }
+  return out
+}
+
+/** Build runtime state map from schedule.json. */
+async function loadAllStoreStates(configs, scheduleFile) {
+  const states = new Map()
+  for (const config of configs) {
+    states.set(config.id, defaultStoreState(config, scheduleFile))
+  }
+  return states
+}
+
+function isDue(state, now) {
+  if (force) return true
+  const nextMs = toEpoch(state.nextCrawlAt)
+  return nextMs == null || now >= nextMs
 }
 
 /** Last history point per kind (for adaptive X + crawl fallback). */
@@ -298,15 +449,13 @@ function snapshotFromHistory(store, history) {
   }
 }
 
-/** Returns kinds whose buy/sell differ from previous history tip (for adaptive X). */
-function changedKinds(prevByKind, nextSnapshots) {
+/** Kinds in snap whose buy/sell differ from previous history tip. */
+function changedKindsForSnap(prevByKind, snap) {
   const changed = []
-  for (const snap of nextSnapshots) {
-    for (const row of snap.rows) {
-      const old = prevByKind.get(row.kind)
-      if (!old || old.buy !== row.buy || old.sell !== row.sell) {
-        changed.push({ snap, row })
-      }
+  for (const row of snap.rows) {
+    const old = prevByKind.get(row.kind)
+    if (!old || old.buy !== row.buy || old.sell !== row.sell) {
+      changed.push(row.kind)
     }
   }
   return changed
@@ -342,17 +491,10 @@ function appendHistory(history, additions) {
   return [...history, ...additions].slice(-20_000)
 }
 
-function historyPaths() {
-  return Object.fromEntries(
-    STORES.map((id) => [id, path.join(DATA_DIR, 'history', id, 'history.json')]),
-  )
-}
-
-async function loadAllHistory() {
-  const paths = historyPaths()
+async function loadAllHistory(storeIds) {
   const fromSplit = []
-  for (const id of STORES) {
-    const list = await loadJson(paths[id], [])
+  for (const id of storeIds) {
+    const list = await loadJson(historyPath(id), [])
     if (Array.isArray(list)) fromSplit.push(...list)
   }
   if (fromSplit.length) return fromSplit
@@ -361,12 +503,11 @@ async function loadAllHistory() {
   return Array.isArray(legacy) ? legacy : []
 }
 
-async function writeHistorySplit(history) {
-  const paths = historyPaths()
-  for (const store of STORES) {
+async function writeHistoryForStores(history, storeIds) {
+  for (const store of storeIds) {
     await mkdir(path.join(DATA_DIR, 'history', store), { recursive: true })
     const list = history.filter((p) => p.store === store)
-    await writeFile(paths[store], JSON.stringify(list, null, 2) + '\n')
+    await writeFile(historyPath(store), JSON.stringify(list, null, 2) + '\n')
   }
 }
 
@@ -384,45 +525,80 @@ async function crawlSource(source, now) {
   if (!hasValidRows(snap)) {
     throw new Error('empty or invalid price cells')
   }
+  snap.store = source.id
   snap.rows = snap.rows.filter((r) => Number(r.buy) > 0 && Number(r.sell) > 0)
   snap.fetchedAt = now
   return snap
 }
 
+function nextIntervalMinutes(config, state, priceChanged) {
+  const crawl = config.crawl
+  if (crawl.mode === 'fixed') {
+    return Number(crawl.intervalMinutes)
+  }
+  const min = Number(crawl.minIntervalMinutes)
+  const max = Number(crawl.maxIntervalMinutes)
+  let interval = Number(state.intervalMinutes) || Number(crawl.intervalMinutes)
+  if (priceChanged) {
+    interval = clampInterval(Math.floor(interval / 2), min, max)
+  } else {
+    interval = clampInterval(interval * 2, min, max)
+  }
+  return interval
+}
+
+function statusEntryFromState(storeId, state) {
+  const entry = {
+    store: storeId,
+    rows: Number(state.rows) || 0,
+    status: state.status || 'ok',
+  }
+  if (state.error) entry.error = state.error
+  return entry
+}
+
+function buildScheduleFile(configs, states) {
+  const stores = {}
+  for (const config of configs) {
+    stores[config.id] = toPersistedRuntime(config, states.get(config.id))
+  }
+  return { stores }
+}
+
 async function main() {
   await mkdir(DATA_DIR, { recursive: true })
 
-  const schedulePath = path.join(DATA_DIR, 'schedule.json')
-
-  const schedule = {
-    ...defaultSchedule(),
-    ...(await loadJson(schedulePath, {})),
-  }
-  schedule.minIntervalMinutes = MIN_INTERVAL
-  schedule.maxIntervalMinutes = MAX_INTERVAL
+  const configs = await loadStoreConfigs()
+  const storeIds = configs.map((c) => c.id)
+  const scheduleFile = await loadJson(SCHEDULE_PATH, null)
 
   const now = Date.now()
-  const nextCrawlMs = toEpoch(schedule.nextCrawlAt)
-  const due = force || nextCrawlMs == null || now >= nextCrawlMs
+  const states = await loadAllStoreStates(configs, scheduleFile)
 
-  if (!due) {
-    const waitMin = Math.ceil((nextCrawlMs - now) / 60_000)
-    console.log(
-      `Skip crawl: not due yet (next in ~${waitMin}m, X=${schedule.intervalMinutes}m, nextCrawlAt=${toIso(nextCrawlMs)})`,
-    )
+  const dueConfigs = configs.filter((c) => isDue(states.get(c.id), now))
+  if (!dueConfigs.length) {
+    const summary = configs.map((c) => {
+      const st = states.get(c.id)
+      const nextMs = toEpoch(st.nextCrawlAt)
+      const waitMin =
+        nextMs == null ? 0 : Math.max(0, Math.ceil((nextMs - now) / 60_000))
+      return `${c.id}(~${waitMin}m,X=${st.intervalMinutes}m)`
+    })
+    console.log(`Skip crawl: no store due [${summary.join(', ')}]`)
     process.exit(0)
   }
 
-  const { sources } = await loadJson(SOURCES_PATH, { sources: [] })
-  if (!sources.length) throw new Error('No sources in scripts/sources.json')
+  console.log(
+    `Due stores: ${dueConfigs.map((c) => c.id).join(', ')}${force ? ' (forced)' : ''}`,
+  )
 
-  const prevHistory = await loadAllHistory()
+  const prevHistory = await loadAllHistory(storeIds)
   const cleanedPrev = prevHistory.filter((p) => isTrackedKind(p.kind))
   const historyPruned = cleanedPrev.length !== prevHistory.length
   const prevByKind = lastPointsByKind(cleanedPrev)
 
   const crawlResults = await Promise.all(
-    sources.map(async (source) => {
+    dueConfigs.map(async (source) => {
       try {
         const snap = await crawlSource(source, now)
         return { id: source.id, ok: true, snap }
@@ -434,87 +610,111 @@ async function main() {
     }),
   )
 
-  const storeStatus = []
   const freshSnaps = []
-  let anyUsable = false
+  let anyUsableAmongDue = false
+
   for (const result of crawlResults) {
+    const config = dueConfigs.find((c) => c.id === result.id)
+    const prevState = states.get(result.id)
+    let status = 'failed'
+    let rows = 0
+    let error = result.error
+    let snap = null
+
     if (result.ok) {
-      freshSnaps.push(result.snap)
-      storeStatus.push({ store: result.id, rows: result.snap.rows.length, status: 'ok' })
-      anyUsable = true
-      continue
-    }
-    const prev = snapshotFromHistory(result.id, cleanedPrev)
-    if (hasValidRows(prev)) {
-      storeStatus.push({
-        store: result.id,
-        rows: prev.rows.length,
-        status: 'fallback',
-        error: result.error,
-      })
-      anyUsable = true
+      snap = result.snap
+      freshSnaps.push(snap)
+      status = 'ok'
+      rows = snap.rows.length
+      error = undefined
+      anyUsableAmongDue = true
     } else {
-      storeStatus.push({
-        store: result.id,
-        rows: 0,
-        status: 'failed',
-        error: result.error,
-      })
+      const prev = snapshotFromHistory(result.id, cleanedPrev)
+      if (hasValidRows(prev)) {
+        status = 'fallback'
+        rows = prev.rows.length
+        anyUsableAmongDue = true
+      } else {
+        status = 'failed'
+        rows = 0
+      }
     }
+
+    const changedKinds = snap ? changedKindsForSnap(prevByKind, snap) : []
+    const priceChanged = changedKinds.length > 0
+    const interval = nextIntervalMinutes(
+      config,
+      prevState,
+      result.ok ? priceChanged : false,
+    )
+
+    const nextState = {
+      mode: config.crawl.mode,
+      intervalMinutes: interval,
+      lastCrawlAt: toIso(now),
+      nextCrawlAt: toIso(now + interval * 60_000),
+      lastResult: result.ok ? (priceChanged ? 'changed' : 'unchanged') : status,
+      lastChangedKinds: result.ok && priceChanged ? changedKinds : [],
+      status,
+      rows,
+    }
+    if (config.crawl.mode === 'adaptive') {
+      nextState.minIntervalMinutes = Number(config.crawl.minIntervalMinutes)
+      nextState.maxIntervalMinutes = Number(config.crawl.maxIntervalMinutes)
+    }
+    if (error) nextState.error = error
+
+    states.set(result.id, nextState)
   }
 
-  if (!anyUsable) {
-    throw new Error('All stores failed and no previous history to fall back to')
+  if (!anyUsableAmongDue) {
+    throw new Error(
+      'All due stores failed and no previous history to fall back to',
+    )
   }
 
-  const changedFresh = changedKinds(prevByKind, freshSnaps)
-  const priceChanged = changedFresh.length > 0
   const historyAdditions = historyEntriesFromSnaps(freshSnaps, now, prevByKind)
-
-  let interval = Number(schedule.intervalMinutes) || DEFAULT_INTERVAL
-  if (priceChanged) {
-    interval = clampInterval(
-      Math.floor(interval / 2),
-      schedule.minIntervalMinutes,
-      schedule.maxIntervalMinutes,
-    )
-  } else {
-    interval = clampInterval(
-      interval * 2,
-      schedule.minIntervalMinutes,
-      schedule.maxIntervalMinutes,
-    )
-  }
-
   const history = appendHistory(cleanedPrev, historyAdditions)
 
-  const nextCrawlAtMs = now + interval * 60_000
-  const nextSchedule = {
-    intervalMinutes: interval,
-    minIntervalMinutes: schedule.minIntervalMinutes,
-    maxIntervalMinutes: schedule.maxIntervalMinutes,
-    lastCrawlAt: toIso(now),
-    nextCrawlAt: toIso(nextCrawlAtMs),
-    lastResult: priceChanged ? 'changed' : 'unchanged',
-    lastChangedKinds: priceChanged ? changedFresh.map((c) => c.row.kind) : [],
-    storeStatus,
+  await writeFile(
+    SCHEDULE_PATH,
+    JSON.stringify(buildScheduleFile(configs, states), null, 2) + '\n',
+  )
+
+  const touchedHistoryIds = new Set(historyAdditions.map((p) => p.store))
+  if (historyPruned) {
+    for (const id of storeIds) touchedHistoryIds.add(id)
+  }
+  if (touchedHistoryIds.size) {
+    await writeHistoryForStores(history, [...touchedHistoryIds])
   }
 
-  await writeFile(schedulePath, JSON.stringify(nextSchedule, null, 2) + '\n')
-  if (historyAdditions.length || historyPruned) {
-    await writeHistorySplit(history)
-  }
+  const storeStatus = configs.map((c) =>
+    statusEntryFromState(c.id, states.get(c.id)),
+  )
 
   console.log(
     JSON.stringify(
       {
         forced: force,
-        priceChanged,
-        changedKinds: nextSchedule.lastChangedKinds,
-        intervalMinutes: interval,
-        nextCrawlAt: nextSchedule.nextCrawlAt,
+        due: dueConfigs.map((c) => c.id),
         historyAppended: historyAdditions.length,
         stores: storeStatus,
+        schedules: Object.fromEntries(
+          dueConfigs.map((c) => {
+            const st = states.get(c.id)
+            return [
+              c.id,
+              {
+                mode: st.mode,
+                intervalMinutes: st.intervalMinutes,
+                nextCrawlAt: st.nextCrawlAt,
+                lastResult: st.lastResult,
+                lastChangedKinds: st.lastChangedKinds,
+              },
+            ]
+          }),
+        ),
       },
       null,
       2,

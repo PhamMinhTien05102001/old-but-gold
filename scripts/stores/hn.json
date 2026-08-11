@@ -1,0 +1,10 @@
+{
+  "id": "hn",
+  "label": "Hồng Ngọc",
+  "url": "https://giavangmaothiet.com/gia-vang-hong-ngoc-hom-nay/",
+  "parser": "hn",
+  "crawl": {
+    "mode": "fixed",
+    "intervalMinutes": 30
+  }
+}
