@@ -2,7 +2,11 @@ import { parseHkn } from './parseHkn'
 import { parseKkvh } from './parseKkvh'
 import { parseHn } from './parseHn'
 import { normalizeSourceUpdatedAt, pointTimeMs } from './normalize'
-import type { StoreHealth } from './stores'
+import type {
+  ScheduleStoresMap,
+  StoreHealth,
+  StoreScheduleRuntime,
+} from './stores'
 import type { PricePoint, StoreId, StoreSnapshot } from '../types'
 
 export type SnapshotsPayload = {
@@ -19,10 +23,18 @@ export type StoreStatusMap = Record<StoreId, StoreHealth>
 
 export type SnapshotSource = 'proxy' | 'json' | 'test'
 
+const STORE_IDS: StoreId[] = ['hkn', 'kkvh', 'hn']
+
 const DEFAULT_STATUS: StoreStatusMap = {
   hkn: 'ok',
   kkvh: 'ok',
   hn: 'ok',
+}
+
+export const EMPTY_SCHEDULE_STORES: ScheduleStoresMap = {
+  hkn: {},
+  kkvh: {},
+  hn: {},
 }
 
 /** `VITE_USE_TEST_DATA=true` trong `.env` → đọc `public/data-test/`. */
@@ -81,33 +93,65 @@ function normalizeHistoryPoint(p: PricePoint): PricePoint {
 }
 
 type ScheduleFile = {
-  stores?: Record<
-    string,
-    { status?: string; rows?: number; error?: string }
-  >
+  stores?: Record<string, StoreScheduleRuntime & { status?: string }>
   storeStatus?: { store: string; status: string; rows?: number }[]
 }
 
-async function fetchScheduleStatus(): Promise<StoreStatusMap> {
-  const schedule = await fetchJson<ScheduleFile>('schedule.json')
-  const map: StoreStatusMap = { ...DEFAULT_STATUS }
+function isStoreId(id: string): id is StoreId {
+  return id === 'hkn' || id === 'kkvh' || id === 'hn'
+}
 
-  const apply = (store: string, status: string | undefined) => {
-    if (store !== 'hkn' && store !== 'kkvh' && store !== 'hn') return
-    if (status === 'ok' || status === 'fallback' || status === 'failed') {
-      map[store] = status
-    }
+function parseHealth(status: string | undefined): StoreHealth | undefined {
+  if (status === 'ok' || status === 'fallback' || status === 'failed') return status
+  return undefined
+}
+
+export type SchedulePayload = {
+  storeStatus: StoreStatusMap
+  scheduleStores: ScheduleStoresMap
+}
+
+export async function fetchSchedule(): Promise<SchedulePayload> {
+  const schedule = await fetchJson<ScheduleFile>('schedule.json')
+  const storeStatus: StoreStatusMap = { ...DEFAULT_STATUS }
+  const scheduleStores: ScheduleStoresMap = {
+    hkn: {},
+    kkvh: {},
+    hn: {},
   }
 
   if (schedule?.stores) {
     for (const [id, st] of Object.entries(schedule.stores)) {
-      apply(id, st?.status)
+      if (!isStoreId(id) || !st) continue
+      const health = parseHealth(st.status)
+      if (health) storeStatus[id] = health
+      scheduleStores[id] = {
+        intervalMinutes: st.intervalMinutes,
+        lastCrawlAt: st.lastCrawlAt,
+        nextCrawlAt: st.nextCrawlAt,
+        lastResult: st.lastResult,
+        lastChangedKinds: st.lastChangedKinds,
+        status: health,
+        rows: st.rows,
+        error: st.error,
+      }
     }
   }
+
   for (const entry of schedule?.storeStatus ?? []) {
-    apply(entry.store, entry.status)
+    if (!isStoreId(entry.store)) continue
+    const health = parseHealth(entry.status)
+    if (health) {
+      storeStatus[entry.store] = health
+      scheduleStores[entry.store] = {
+        ...scheduleStores[entry.store],
+        status: health,
+        rows: entry.rows ?? scheduleStores[entry.store].rows,
+      }
+    }
   }
-  return map
+
+  return { storeStatus, scheduleStores }
 }
 
 function snapshotFromStoreHistory(
@@ -240,13 +284,14 @@ export async function fetchAllSnapshots(history?: PricePoint[]): Promise<{
   fetchedAt: number
   source: SnapshotSource
   storeStatus: StoreStatusMap
+  scheduleStores: ScheduleStoresMap
 }> {
   const hist = history ?? (await fetchRemoteHistory())
 
   if (useTestData()) {
-    const [snaps, storeStatus] = await Promise.all([
+    const [snaps, schedule] = await Promise.all([
       Promise.resolve(snapshotsFromHistory(hist)),
-      fetchScheduleStatus(),
+      fetchSchedule(),
     ])
     return {
       hkn: snaps.hkn,
@@ -254,15 +299,17 @@ export async function fetchAllSnapshots(history?: PricePoint[]): Promise<{
       hn: snaps.hn,
       fetchedAt: snaps.fetchedAt,
       source: 'test',
-      storeStatus,
+      storeStatus: schedule.storeStatus,
+      scheduleStores: schedule.scheduleStores,
     }
   }
 
   if (import.meta.env.DEV) {
-    const [hknRes, kkvhRes, hnRes] = await Promise.all([
+    const [hknRes, kkvhRes, hnRes, schedule] = await Promise.all([
       fetchProxySnapshot('hkn', '/proxy/hkn', parseHkn, 'Hoa Kim Nguyên', hist),
       fetchProxySnapshot('kkvh', '/proxy/kkvh', parseKkvh, 'Kim Khánh Việt Hùng', hist),
       fetchProxySnapshot('hn', '/proxy/hn', parseHn, 'Hồng Ngọc', hist),
+      fetchSchedule(),
     ])
     if (
       !hasValidRows(hknRes.snap) &&
@@ -271,23 +318,32 @@ export async function fetchAllSnapshots(history?: PricePoint[]): Promise<{
     ) {
       throw new Error('Không lấy được giá từ proxy và không có history fallback')
     }
+    const storeStatus: StoreStatusMap = {
+      hkn: hknRes.status,
+      kkvh: kkvhRes.status,
+      hn: hnRes.status,
+    }
+    const scheduleStores = { ...schedule.scheduleStores }
+    for (const id of STORE_IDS) {
+      scheduleStores[id] = {
+        ...scheduleStores[id],
+        status: storeStatus[id],
+      }
+    }
     return {
       hkn: hknRes.snap,
       kkvh: kkvhRes.snap,
       hn: hnRes.snap,
       fetchedAt: Date.now(),
       source: 'proxy',
-      storeStatus: {
-        hkn: hknRes.status,
-        kkvh: kkvhRes.status,
-        hn: hnRes.status,
-      },
+      storeStatus,
+      scheduleStores,
     }
   }
 
-  const [snaps, storeStatus] = await Promise.all([
+  const [snaps, schedule] = await Promise.all([
     Promise.resolve(snapshotsFromHistory(hist)),
-    fetchScheduleStatus(),
+    fetchSchedule(),
   ])
   return {
     hkn: snaps.hkn,
@@ -295,6 +351,7 @@ export async function fetchAllSnapshots(history?: PricePoint[]): Promise<{
     hn: snaps.hn,
     fetchedAt: snaps.fetchedAt,
     source: 'json',
-    storeStatus,
+    storeStatus: schedule.storeStatus,
+    scheduleStores: schedule.scheduleStores,
   }
 }

@@ -9,11 +9,12 @@ import {
 } from 'react'
 import type { CurrentRow, PricePoint, StoreId, StoreSnapshot } from '../types'
 import {
+  EMPTY_SCHEDULE_STORES,
   fetchAllSnapshots,
   fetchRemoteHistory,
   type StoreStatusMap,
 } from '../lib/fetchPrices'
-import type { StoreHealth } from '../lib/stores'
+import type { ScheduleStoresMap, StoreHealth } from '../lib/stores'
 
 const DEFAULT_STATUS: StoreStatusMap = {
   hkn: 'ok',
@@ -36,6 +37,7 @@ type GoldPricesContextValue = {
   kkvhRows: CurrentRow[]
   hnRows: CurrentRow[]
   storeStatus: StoreStatusMap
+  scheduleStores: ScheduleStoresMap
   getStoreStatus: (id: StoreId) => StoreHealth
 }
 
@@ -49,18 +51,26 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
   const [kkvh, setKkvh] = useState<StoreSnapshot | null>(null)
   const [hn, setHn] = useState<StoreSnapshot | null>(null)
   const [storeStatus, setStoreStatus] = useState<StoreStatusMap>(DEFAULT_STATUS)
+  const [scheduleStores, setScheduleStores] =
+    useState<ScheduleStoresMap>(EMPTY_SCHEDULE_STORES)
 
   const loadPrices = useCallback(async () => {
     setStatus('loading')
     setError(null)
     try {
       const remote = await fetchRemoteHistory()
-      const { hkn: h, kkvh: k, hn: n, storeStatus: nextStatus } =
-        await fetchAllSnapshots(remote)
+      const {
+        hkn: h,
+        kkvh: k,
+        hn: n,
+        storeStatus: nextStatus,
+        scheduleStores: nextSchedule,
+      } = await fetchAllSnapshots(remote)
       setHkn(h)
       setKkvh(k)
       setHn(n)
       setStoreStatus(nextStatus)
+      setScheduleStores(nextSchedule)
       setHistory(remote)
       setStatus('ready')
     } catch (e) {
@@ -86,12 +96,15 @@ export function GoldPricesProvider({ children }: { children: ReactNode }) {
       kkvhRows: kkvh?.rows ?? [],
       hnRows: hn?.rows ?? [],
       storeStatus,
+      scheduleStores,
       getStoreStatus: (id) => storeStatus[id] ?? 'ok',
     }),
-    [status, error, history, hkn, kkvh, hn, storeStatus],
+    [status, error, history, hkn, kkvh, hn, storeStatus, scheduleStores],
   )
 
-  return <GoldPricesContext.Provider value={value}>{children}</GoldPricesContext.Provider>
+  return (
+    <GoldPricesContext.Provider value={value}>{children}</GoldPricesContext.Provider>
+  )
 }
 
 export function useGoldPrices(): GoldPricesContextValue {

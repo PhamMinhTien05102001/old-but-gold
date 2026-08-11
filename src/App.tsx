@@ -10,7 +10,7 @@ function routeNeedsAlert(
   routeId: string,
   storeStatus: Record<StoreId, string>,
 ): boolean {
-  if (routeId === 'summary') {
+  if (routeId === 'summary' || routeId === 'crawl') {
     return (['hkn', 'kkvh', 'hn'] as StoreId[]).some((id) =>
       isStoreUnhealthy(storeStatus[id] as 'ok' | 'fallback' | 'failed'),
     )

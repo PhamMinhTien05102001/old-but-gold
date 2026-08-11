@@ -147,30 +147,16 @@ Chart đang **line-only**, `dot={false}` — chi tiết chỉ qua hover ([`CHART
 
 ---
 
-## S3. `[SUGGEST]` Panel trạng thái crawl trên UI
+## S3. `[SUGGEST]` Panel trạng thái crawl trên UI — ✅ Đã làm
 
-### Bối cảnh
+Tab **Lịch crawl** (`/crawl`): bảng per-store từ [`schedule.json`](public/data/schedule.json) + policy mirror [`CRAWL_POLICY`](src/lib/stores.ts). Xem [`CrawlPage`](src/pages/CrawlPage/index.tsx).
 
-App đọc history + `storeStatus`, nhưng user không thấy lịch crawl: `lastCrawlAt`, `nextCrawlAt`, `intervalMinutes` trong [`schedule.json`](public/data/schedule.json) ([`CRAWL.md`](CRAWL.md)). Trên GitHub Pages dễ có cảm giác “sao giá chưa cập nhật?” trong khi bot chưa tới hạn crawl.
+<details>
+<summary>Mô tả gốc</summary>
 
-### Hướng làm
+App đọc history + `storeStatus`, nhưng user không thấy lịch crawl. Tab riêng (không chen chart) hiện `lastCrawlAt`, `nextCrawlAt`, X / mode, `lastResult`, health. Chỉ đọc — không trigger Actions từ UI.
 
-- Fetch / reuse `schedule.json` (context đã có health — mở rộng đọc schedule nếu chưa)
-- UI gọn (footer tab store, hoặc block nhỏ trên Summary / header app):
-  | Trường | Hiển thị |
-  |--------|----------|
-  | Lần crawl gần nhất | `lastCrawlAt` → relative + absolute `vi-VN` |
-  | Lần crawl kế tiếp | `nextCrawlAt` (hoặc “đã tới hạn / đang chờ Actions”) |
-  | Khoảng X hiện tại | `intervalMinutes` phút |
-  | Kết quả lần trước | `lastResult` + `lastChangedKinds` nếu có |
-  | Health từng tiệm | đã có `storeStatus` — gắn cạnh tên store |
-
-- Khi đã làm **crawl per-store** (mục 2): panel hiện từng store thay vì một dòng global
-
-### Lưu ý
-
-- Đây là metadata vận hành, không phải giá — giữ UI nhỏ, không chen hero/chart
-- `nextCrawlAt` là kế hoạch bot; Actions heartbeat ~30p nên “tới hạn” ≠ “đã crawl xong ngay lập tức”
+</details>
 
 ---
 

@@ -94,6 +94,8 @@ Heartbeat cron vẫn `*/30`. Store adaptive có thể skip nhiều heartbeat; st
 
 UI đọc `stores.{id}.status`. `nextCrawlAt` thiếu/null → lần chạy đầu crawl store đó ngay.
 
+Tab **Lịch crawl** (`/crawl`) hiện bảng vận hành per-store (chỉ đọc).
+
 ## History & so sánh “đổi giá”
 
 Mỗi lần crawl **thành công** (status `ok`), từng `kind` tracked chỉ được **append** vào `history/{store}/history.json` khi `sourceUpdatedAt` (giờ tiệm, đã normalize) **khác** điểm cuối history cùng kind. Cùng giờ tiệm → bỏ qua (không nhân đôi điểm). Thiếu `sourceUpdatedAt` → không append kind đó.
