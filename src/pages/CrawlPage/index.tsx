@@ -51,31 +51,6 @@ function lastResultLabel(runtime: StoreScheduleRuntime): string {
   return result
 }
 
-function formatUntil(targetMs: number, now: number): string {
-  const diffMs = Math.max(0, targetMs - now)
-  const minutes = Math.floor(diffMs / 60_000)
-  if (minutes < 1) return 'dưới 1 phút'
-  if (minutes < 60) return `${minutes} phút`
-  const hours = Math.floor(minutes / 60)
-  const rem = minutes % 60
-  if (rem === 0) return `${hours} tiếng`
-  return `${hours} tiếng ${rem} phút`
-}
-
-function NextCrawlCell({ nextMs, now }: { nextMs: number | null; now: number }) {
-  if (nextMs == null) {
-    return <span className="text-muted">Chưa có lịch</span>
-  }
-  return (
-    <span>
-      còn {formatUntil(nextMs, now)}
-      <span className="text-muted mt-0.5 block text-[0.85rem]">
-        {formatAbsolute(nextMs)}
-      </span>
-    </span>
-  )
-}
-
 export function CrawlPage() {
   const { scheduleStores, storeStatus } = useGoldPrices()
   const now = Date.now()
@@ -106,9 +81,6 @@ export function CrawlPage() {
                 Crawl gần nhất
               </th>
               <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
-                Crawl kế
-              </th>
-              <th className="border-line bg-table-head border-b px-3.5 py-2.5 text-left font-bold">
                 Lần trước
               </th>
             </tr>
@@ -121,7 +93,6 @@ export function CrawlPage() {
               const health = storeStatus[id] ?? runtime.status ?? 'ok'
               const unhealthy = isStoreUnhealthy(health)
               const lastMs = parseIsoMs(runtime.lastCrawlAt)
-              const nextMs = parseIsoMs(runtime.nextCrawlAt)
 
               return (
                 <tr key={id} className="border-line border-b last:border-b-0">
@@ -161,9 +132,6 @@ export function CrawlPage() {
                     ) : (
                       <span className="text-muted">—</span>
                     )}
-                  </td>
-                  <td className="px-3.5 py-3 align-top">
-                    <NextCrawlCell nextMs={nextMs} now={now} />
                   </td>
                   <td className="px-3.5 py-3 align-top">{lastResultLabel(runtime)}</td>
                 </tr>
