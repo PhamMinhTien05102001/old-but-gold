@@ -889,5 +889,14 @@
     "buy": 13290000,
     "sell": 13690000,
     "sourceUpdatedAt": "16:35:05 13/08/2026"
+  },
+  {
+    "ts": 1786620160725,
+    "store": "hn",
+    "kind": "hn_nhan_9999",
+    "label": "Vàng Nhẫn 9999 Hồng Ngọc",
+    "buy": 13290000,
+    "sell": 13690000,
+    "sourceUpdatedAt": "17:35:06 13/08/2026"
   }
 ]
