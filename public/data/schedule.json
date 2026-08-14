@@ -10,12 +10,10 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-08-13T23:12:48.393Z",
-      "nextCrawlAt": "2026-08-13T23:42:48.393Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "hn_nhan_9999"
-      ],
+      "lastCrawlAt": "2026-08-14T00:08:37.606Z",
+      "nextCrawlAt": "2026-08-14T00:38:37.606Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
