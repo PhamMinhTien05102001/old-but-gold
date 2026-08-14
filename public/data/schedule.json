@@ -10,21 +10,21 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-08-14T14:56:20.467Z",
-      "nextCrawlAt": "2026-08-14T15:26:20.467Z",
+      "lastCrawlAt": "2026-08-14T15:58:15.936Z",
+      "nextCrawlAt": "2026-08-14T16:28:15.936Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-08-14T14:56:20.467Z",
-      "nextCrawlAt": "2026-08-14T15:56:20.467Z",
+      "lastCrawlAt": "2026-08-14T15:58:15.936Z",
+      "nextCrawlAt": "2026-08-14T17:58:15.936Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
       "rows": 1,
-      "intervalMinutes": 60
+      "intervalMinutes": 120
     }
   }
 }
