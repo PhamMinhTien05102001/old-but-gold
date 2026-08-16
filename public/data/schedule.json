@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-08-16T01:40:43.772Z",
-      "nextCrawlAt": "2026-08-16T03:40:43.772Z",
+      "lastCrawlAt": "2026-08-16T04:09:19.178Z",
+      "nextCrawlAt": "2026-08-16T06:09:19.178Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
@@ -10,8 +10,8 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-08-16T03:05:12.309Z",
-      "nextCrawlAt": "2026-08-16T03:35:12.309Z",
+      "lastCrawlAt": "2026-08-16T04:09:19.178Z",
+      "nextCrawlAt": "2026-08-16T04:39:19.178Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
