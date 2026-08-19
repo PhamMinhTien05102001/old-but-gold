@@ -394,5 +394,14 @@
     "buy": 13480000,
     "sell": 13640000,
     "sourceUpdatedAt": "07:59:11 19/08/2026"
+  },
+  {
+    "ts": 1787135622250,
+    "store": "hkn",
+    "kind": "hkn_nhan_9999",
+    "label": "Vàng nhẫn khâu 9999",
+    "buy": 13500000,
+    "sell": 13660000,
+    "sourceUpdatedAt": "16:14:26 19/08/2026"
   }
 ]
