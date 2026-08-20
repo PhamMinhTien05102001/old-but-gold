@@ -11,8 +11,8 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-08-20T18:47:48.304Z",
-      "nextCrawlAt": "2026-08-20T19:17:48.304Z",
+      "lastCrawlAt": "2026-08-20T19:35:49.052Z",
+      "nextCrawlAt": "2026-08-20T20:05:49.052Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
