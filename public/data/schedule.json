@@ -11,25 +11,21 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-08-22T08:35:49.319Z",
-      "nextCrawlAt": "2026-08-22T09:05:49.319Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "hn_nhan_9999"
-      ],
+      "lastCrawlAt": "2026-08-22T09:31:52.820Z",
+      "nextCrawlAt": "2026-08-22T10:01:52.820Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-08-22T08:35:49.319Z",
-      "nextCrawlAt": "2026-08-22T09:05:49.319Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "kkvh_9999"
-      ],
+      "lastCrawlAt": "2026-08-22T09:31:52.820Z",
+      "nextCrawlAt": "2026-08-22T10:31:52.820Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1,
-      "intervalMinutes": 30
+      "intervalMinutes": 60
     }
   }
 }
