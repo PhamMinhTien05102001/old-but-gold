@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-08-23T18:35:47.383Z",
-      "nextCrawlAt": "2026-08-23T20:35:47.383Z",
+      "lastCrawlAt": "2026-08-23T20:52:51.777Z",
+      "nextCrawlAt": "2026-08-23T22:52:51.777Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
