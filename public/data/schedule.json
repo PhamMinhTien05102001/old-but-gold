@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-09-07T13:24:07.936Z",
-      "nextCrawlAt": "2026-09-07T15:24:07.936Z",
+      "lastCrawlAt": "2026-09-07T18:20:30.235Z",
+      "nextCrawlAt": "2026-09-07T20:20:30.235Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -11,25 +11,21 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-09-07T13:24:07.936Z",
-      "nextCrawlAt": "2026-09-07T13:54:07.936Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "hn_nhan_9999"
-      ],
+      "lastCrawlAt": "2026-09-07T18:20:30.235Z",
+      "nextCrawlAt": "2026-09-07T18:50:30.235Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-09-07T13:24:07.936Z",
-      "nextCrawlAt": "2026-09-07T13:54:07.936Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "kkvh_9999"
-      ],
+      "lastCrawlAt": "2026-09-07T18:20:30.235Z",
+      "nextCrawlAt": "2026-09-07T19:20:30.235Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1,
-      "intervalMinutes": 30
+      "intervalMinutes": 60
     }
   }
 }
