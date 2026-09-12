@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-09-12T05:30:48.811Z",
-      "nextCrawlAt": "2026-09-12T07:30:48.811Z",
+      "lastCrawlAt": "2026-09-12T10:25:10.337Z",
+      "nextCrawlAt": "2026-09-12T12:25:10.337Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -11,25 +11,22 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-09-12T05:30:48.811Z",
-      "nextCrawlAt": "2026-09-12T06:00:48.811Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "hn_nhan_9999"
-      ],
+      "lastCrawlAt": "2026-09-12T10:25:10.337Z",
+      "nextCrawlAt": "2026-09-12T10:55:10.337Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-09-12T05:30:48.811Z",
-      "nextCrawlAt": "2026-09-12T06:00:48.811Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "kkvh_9999"
-      ],
-      "status": "ok",
+      "lastCrawlAt": "2026-09-12T10:25:10.337Z",
+      "nextCrawlAt": "2026-09-12T11:25:10.337Z",
+      "lastResult": "fallback",
+      "lastChangedKinds": [],
+      "status": "fallback",
       "rows": 1,
-      "intervalMinutes": 30
+      "error": "empty or invalid price cells",
+      "intervalMinutes": 60
     }
   }
 }
