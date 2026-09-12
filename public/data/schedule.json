@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-09-12T21:34:27.304Z",
-      "nextCrawlAt": "2026-09-12T23:34:27.304Z",
+      "lastCrawlAt": "2026-09-12T23:52:34.730Z",
+      "nextCrawlAt": "2026-09-13T01:52:34.730Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -11,21 +11,20 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-09-12T21:34:27.304Z",
-      "nextCrawlAt": "2026-09-12T22:04:27.304Z",
+      "lastCrawlAt": "2026-09-12T23:52:34.730Z",
+      "nextCrawlAt": "2026-09-13T00:22:34.730Z",
       "lastResult": "unchanged",
       "lastChangedKinds": [],
       "status": "ok",
       "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-09-12T21:34:27.304Z",
-      "nextCrawlAt": "2026-09-12T23:34:27.304Z",
-      "lastResult": "fallback",
+      "lastCrawlAt": "2026-09-12T23:52:34.730Z",
+      "nextCrawlAt": "2026-09-13T01:52:34.730Z",
+      "lastResult": "unchanged",
       "lastChangedKinds": [],
-      "status": "fallback",
+      "status": "ok",
       "rows": 1,
-      "error": "empty or invalid price cells",
       "intervalMinutes": 120
     }
   }
