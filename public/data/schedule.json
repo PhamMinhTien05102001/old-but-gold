@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-09-27T04:42:50.946Z",
-      "nextCrawlAt": "2026-09-27T06:42:50.946Z",
+      "lastCrawlAt": "2026-09-27T10:26:16.619Z",
+      "nextCrawlAt": "2026-09-27T12:26:16.619Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -11,24 +11,21 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-09-27T04:42:50.946Z",
-      "nextCrawlAt": "2026-09-27T05:12:50.946Z",
-      "lastResult": "fallback",
+      "lastCrawlAt": "2026-09-27T10:26:16.619Z",
+      "nextCrawlAt": "2026-09-27T10:56:16.619Z",
+      "lastResult": "unchanged",
       "lastChangedKinds": [],
-      "status": "fallback",
-      "rows": 1,
-      "error": "Fetch failed 522 https://giavangmaothiet.com/gia-vang-hong-ngoc-hom-nay/"
+      "status": "ok",
+      "rows": 1
     },
     "kkvh": {
-      "lastCrawlAt": "2026-09-27T04:42:50.946Z",
-      "nextCrawlAt": "2026-09-27T05:42:50.946Z",
-      "lastResult": "changed",
-      "lastChangedKinds": [
-        "kkvh_9999"
-      ],
+      "lastCrawlAt": "2026-09-27T10:26:16.619Z",
+      "nextCrawlAt": "2026-09-27T12:26:16.619Z",
+      "lastResult": "unchanged",
+      "lastChangedKinds": [],
       "status": "ok",
       "rows": 1,
-      "intervalMinutes": 60
+      "intervalMinutes": 120
     }
   }
 }
