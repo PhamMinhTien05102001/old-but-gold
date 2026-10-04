@@ -1,8 +1,8 @@
 {
   "stores": {
     "hkn": {
-      "lastCrawlAt": "2026-10-03T23:39:19.673Z",
-      "nextCrawlAt": "2026-10-04T01:39:19.673Z",
+      "lastCrawlAt": "2026-10-04T05:15:13.646Z",
+      "nextCrawlAt": "2026-10-04T07:15:13.646Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -11,8 +11,8 @@
       "intervalMinutes": 120
     },
     "hn": {
-      "lastCrawlAt": "2026-10-03T23:39:19.673Z",
-      "nextCrawlAt": "2026-10-04T00:09:19.673Z",
+      "lastCrawlAt": "2026-10-04T05:15:13.646Z",
+      "nextCrawlAt": "2026-10-04T05:45:13.646Z",
       "lastResult": "fallback",
       "lastChangedKinds": [],
       "status": "fallback",
@@ -20,13 +20,15 @@
       "error": "fetch failed"
     },
     "kkvh": {
-      "lastCrawlAt": "2026-10-03T23:39:19.673Z",
-      "nextCrawlAt": "2026-10-04T01:39:19.673Z",
-      "lastResult": "unchanged",
-      "lastChangedKinds": [],
+      "lastCrawlAt": "2026-10-04T05:15:13.646Z",
+      "nextCrawlAt": "2026-10-04T06:15:13.646Z",
+      "lastResult": "changed",
+      "lastChangedKinds": [
+        "kkvh_9999"
+      ],
       "status": "ok",
       "rows": 1,
-      "intervalMinutes": 120
+      "intervalMinutes": 60
     }
   }
 }
